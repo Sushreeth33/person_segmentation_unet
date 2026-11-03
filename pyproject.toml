@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "person-segmentation-unet"
+version = "0.1.0"
+description = "Penn-Fudan person segmentation experiments with U-Net"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.2", "Pillow>=10.0", "numpy>=1.26", "tqdm>=4.66"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
