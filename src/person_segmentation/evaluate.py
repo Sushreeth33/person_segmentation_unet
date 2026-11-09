@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--output", type=Path, help="Optional path to save the evaluation JSON")
     args = parser.parse_args()
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
@@ -40,7 +41,18 @@ def main() -> None:
     device = resolve_device(args.device)
     model.to(device)
     metrics = run_epoch(model, loader, DiceBCELoss(), device)
-    print(json.dumps({"images": len(dataset), **metrics}, indent=2))
+    results = {
+        "checkpoint": str(args.checkpoint),
+        "split": args.split,
+        "images": len(dataset),
+        "threshold": 0.5,
+        "metrics": metrics,
+    }
+    serialized = json.dumps(results, indent=2)
+    print(serialized)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(serialized + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

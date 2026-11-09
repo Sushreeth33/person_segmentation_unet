@@ -49,7 +49,7 @@ def run_epoch(model: UNet, loader: DataLoader, criterion: DiceBCELoss,
               device: torch.device, optimizer: torch.optim.Optimizer | None = None) -> dict[str, float]:
     training = optimizer is not None
     model.train(training)
-    loss_sum = intersection = union = predicted = actual = 0.0
+    loss_sum = true_positive = false_positive = false_negative = true_negative = 0.0
     sample_count = 0
     context = torch.enable_grad() if training else torch.no_grad()
     with context:
@@ -67,14 +67,26 @@ def run_epoch(model: UNet, loader: DataLoader, criterion: DiceBCELoss,
             sample_count += batch_size
             predictions = torch.sigmoid(logits) >= 0.5
             targets = masks >= 0.5
-            intersection += (predictions & targets).sum().item()
-            union += (predictions | targets).sum().item()
-            predicted += predictions.sum().item()
-            actual += targets.sum().item()
+            true_positive += (predictions & targets).sum().item()
+            false_positive += (predictions & ~targets).sum().item()
+            false_negative += (~predictions & targets).sum().item()
+            true_negative += (~predictions & ~targets).sum().item()
+    precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 0.0
+    recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 0.0
+    specificity = true_negative / (true_negative + false_positive) if true_negative + false_positive else 0.0
+    dice = (2 * true_positive) / (2 * true_positive + false_positive + false_negative) \
+        if 2 * true_positive + false_positive + false_negative else 1.0
+    iou = true_positive / (true_positive + false_positive + false_negative) \
+        if true_positive + false_positive + false_negative else 1.0
+    total_pixels = true_positive + false_positive + false_negative + true_negative
     return {
         "loss": loss_sum / max(1, sample_count),
-        "iou": intersection / union if union else 1.0,
-        "dice": (2 * intersection) / (predicted + actual) if predicted + actual else 1.0,
+        "pixel_accuracy": (true_positive + true_negative) / total_pixels if total_pixels else 1.0,
+        "precision": precision,
+        "recall": recall,
+        "specificity": specificity,
+        "dice": dice,
+        "iou": iou,
     }
 
 

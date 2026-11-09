@@ -47,6 +47,17 @@ Checklist status based on the repository, the dataset audit, and the user's upda
 - [x] Calculate dataset statistics
 - [x] Generate dataset visualization and analysis
 
-**Progress: 12/12 complete.** The 170 image/mask pairs were audited with no missing files or dimension mismatches. Original masks are grayscale with background value 0 and person instance IDs 1–8. All positive IDs are merged to foreground; resized masks contain only 0 and 1. Images are resized to 256 × 256 and RGB values are scaled to [0, 1]. The seed-42 split contains 119 train, 25 validation, and 26 test images. Dataset files remain local in the ignored `data/` folder.
+**Progress: 12/12 complete.** The 170 image/mask pairs were audited with no missing files or dimension mismatches. Original masks are grayscale with background value 0 and person instance IDs 1–8. All positive IDs are merged to foreground; resized masks contain only 0 and 1. Images are resized to 256 × 256 and RGB values are scaled to [0, 1]. A saved 256 × 256 PNG copy of all images and binary masks is in the ignored `data/PennFudanPed_256/` folder. The seed-42 split contains 119 train, 25 validation, and 26 test images. Dataset files remain local in the ignored `data/` folder.
 
-Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_image.csv`, `split_seed42.json`, `sample_images_masks.png`, and `instances_per_image.png`. The audit and split implementation is in `src/person_segmentation/analyze_dataset.py`; the filename-aware loader and split validation are in `src/person_segmentation/data.py`.
+Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_image.csv`, `split_seed42.json`, `sample_images_masks.png`, and `instances_per_image.png`. The audit and split implementation is in `src/person_segmentation/analyze_dataset.py`; the 256 × 256 file export is in `src/person_segmentation/export_preprocessed.py`; the filename-aware loader and split validation are in `src/person_segmentation/data.py`.
+
+## S.No. 4 — Baseline Model Implementation
+
+- [x] Implement the baseline U-Net architecture
+- [x] Configure binary segmentation loss and optimizer
+- [x] Train a no-augmentation baseline on the fixed training split
+- [x] Select the checkpoint using validation Dice
+- [x] Evaluate the selected checkpoint on the held-out test split
+- [x] Record baseline settings and metrics
+
+**Progress: 6/6 complete for the initial baseline.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs and no augmentation. The best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851). Test results on the 26-image holdout were Dice 0.8471 and IoU 0.7348. See `report/baseline_results.md` for the configuration and metrics. Augmentation comparison remains next.

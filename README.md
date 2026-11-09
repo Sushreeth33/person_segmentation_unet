@@ -38,30 +38,40 @@ python -m person_segmentation.analyze_dataset --data data/PennFudanPed --output 
 
 The audit checks all 170 image/mask pairs, dimensions, mask IDs, normalized RGB range, and binary-mask values. It saves per-image statistics, a summary, visualizations, and a filename-based split manifest under `report/dataset_analysis/`. The current split uses seed 42 and assigns 119 images to train, 25 to validation, and 26 to test. The dataset itself is local and excluded from Git.
 
+To save physical 256 × 256 PNG copies (instead of resizing only when loading), run:
+
+```bash
+python -m person_segmentation.export_preprocessed --data data/PennFudanPed --output data/PennFudanPed_256 --image-size 256
+```
+
+This creates `data/PennFudanPed_256/PNGImages/` and `data/PennFudanPed_256/PedMasks/`, with 170 files in each. The RGB PNGs remain 8-bit; the loader converts them to `[0, 1]` floats by dividing by 255. The mask PNGs contain exactly `0` for background and `1` for person. Export settings and counts are recorded in `data/PennFudanPed_256/metadata.json`.
+
 Training resizes images to a square input size (default 256 × 256). Penn-Fudan mask filenames append `_mask` to the image stem. Original masks use 0 for background and positive integer IDs for person instances; preprocessing merges every positive ID into one person foreground class. RGB values are scaled to [0, 1]. Images are resized with bilinear interpolation and masks with nearest-neighbor interpolation.
 
 ## Train
 
 ```bash
-python -m person_segmentation.train --data data/PennFudanPed --output results/no_augmentation --augmentation none
+python -m person_segmentation.train --data data/PennFudanPed_256 --output results/baseline --augmentation none --seed 42 --epochs 30 --batch-size 4 --image-size 256 --base-channels 16 --learning-rate 0.001 --device cpu
 ```
 
 Available augmentation modes are `none`, `flip`, `zoom`, and `both`. Horizontal flips and random zooms are applied to images and masks together. For a controlled comparison, keep the seed and all training options fixed and use a separate output directory for each run:
 
 ```bash
-python -m person_segmentation.train --data data/PennFudanPed --output results/flip --augmentation flip --seed 42
-python -m person_segmentation.train --data data/PennFudanPed --output results/zoom --augmentation zoom --seed 42
-python -m person_segmentation.train --data data/PennFudanPed --output results/flip_zoom --augmentation both --seed 42
+python -m person_segmentation.train --data data/PennFudanPed_256 --output results/flip --augmentation flip --seed 42 --epochs 30 --batch-size 4 --image-size 256 --base-channels 16 --learning-rate 0.001 --device cpu
+python -m person_segmentation.train --data data/PennFudanPed_256 --output results/zoom --augmentation zoom --seed 42 --epochs 30 --batch-size 4 --image-size 256 --base-channels 16 --learning-rate 0.001 --device cpu
+python -m person_segmentation.train --data data/PennFudanPed_256 --output results/flip_zoom --augmentation both --seed 42 --epochs 30 --batch-size 4 --image-size 256 --base-channels 16 --learning-rate 0.001 --device cpu
 ```
 
 Training reads the fixed split from `report/dataset_analysis/split_seed42.json`; only train and validation images are used during fitting and checkpoint selection. The test split remains untouched for final evaluation. The best validation Dice checkpoint is saved as `best.pt`; `history.csv` records per-epoch loss, Dice, and IoU, and `config.json` records run settings. Training defaults to CUDA when available, then Apple Metal, then CPU. Common options include `--epochs`, `--batch-size`, `--image-size`, `--learning-rate`, `--base-channels`, and `--device`.
+
+The initial no-augmentation baseline used 16 base channels on CPU. Its best validation checkpoint (epoch 22) reached Dice 0.8131 and IoU 0.6851; held-out test Dice was 0.8471 and IoU was 0.7348. See [the baseline results note](report/baseline_results.md). The checkpoint and epoch history are saved under the ignored `results/` directory.
 
 ## Evaluate and predict
 
 Evaluate a checkpoint on the held-out test split by default:
 
 ```bash
-python -m person_segmentation.evaluate --data data/PennFudanPed --checkpoint results/no_augmentation/best.pt
+python -m person_segmentation.evaluate --data data/PennFudanPed_256 --checkpoint results/baseline/best.pt
 ```
 
 Use `--split validation` to report validation metrics; use `--split all` only for whole-dataset diagnostics, not as an unbiased final score.
@@ -74,4 +84,4 @@ python -m person_segmentation.predict --image path/to/image.png --checkpoint res
 
 ## Metrics and experiment notes
 
-Dice and intersection-over-union (IoU) are calculated from thresholded predictions at 0.5. The model uses a BCE + soft Dice training loss. Record the split seed, augmentation mode, image size, epochs, and validation scores when reporting results. The dataset is small, so results can vary with split choice and training settings; compare runs on the same split and avoid treating validation scores as independent test results.
+Evaluation reports pixel accuracy, precision, recall, specificity, Dice/F1, and IoU from predictions thresholded at 0.5. Dice equals F1 for this binary segmentation setup. Pixel accuracy includes background pixels, so read it with Dice, IoU, precision, and recall. Evaluation JSON can be saved with `--output path/to/metrics.json`. The model uses a BCE + soft Dice training loss. Record the split seed, augmentation mode, image size, epochs, and validation scores when reporting results. The dataset is small, so results can vary with split choice and training settings; compare runs on the same split and reserve test metrics for final comparisons.
