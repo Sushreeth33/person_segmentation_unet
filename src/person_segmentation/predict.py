@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from PIL import Image
 
+from .data import resize_pair, restore_mask
 from .train import resolve_device
 from .model import UNet
 
@@ -30,14 +31,18 @@ def main() -> None:
     image = Image.open(args.image).convert("RGB")
     original_size = image.size
     size = checkpoint["image_size"]
-    image = image.resize((size, size), Image.Resampling.BILINEAR)
+    resize_mode = checkpoint.get("resize_mode", checkpoint.get("config", {}).get("resize_mode", "stretch"))
+    image, _, transform = resize_pair(image, None, size, resize_mode)
     array = np.asarray(image, dtype=np.float32) / 255.0
     tensor = torch.from_numpy(array.transpose(2, 0, 1).copy()).unsqueeze(0).to(device)
     with torch.no_grad():
         probability = torch.sigmoid(model(tensor))[0, 0].cpu().numpy()
     mask = Image.fromarray((probability >= args.threshold).astype(np.uint8) * 255)
+    mask = restore_mask(mask, transform)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    mask.resize(original_size, Image.Resampling.NEAREST).save(args.output)
+    if mask.size != original_size:
+        raise RuntimeError("Restored prediction mask dimensions do not match the input image")
+    mask.save(args.output)
     print(f"Saved binary mask to {args.output}")
 
 

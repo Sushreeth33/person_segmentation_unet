@@ -60,4 +60,20 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Evaluate the selected checkpoint on the held-out test split
 - [x] Record baseline settings and metrics
 
-**Progress: 6/6 complete for the initial baseline.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs and no augmentation. The best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851). Test results on the 26-image holdout were Dice 0.8471 and IoU 0.7348. See `report/baseline_results.md` for the configuration and metrics. Augmentation comparison remains next.
+**Progress: baseline complete; initial augmentation comparison complete.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs. The no-augmentation baseline's best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851); its held-out test scores were Dice 0.8471 and IoU 0.7348. A controlled horizontal-flip run used the same split, seed, model size, optimizer, and epoch budget. Its best validation checkpoint was from epoch 29 (Dice 0.8278, IoU 0.7062), gains of 1.47 and 2.11 percentage points. Test data was not used for this comparison. This is a modest improvement on one validation split, not yet evidence that the augmentation is reliably better. The zoom and combined variants were deferred because each CPU run takes a long time. See `report/baseline_results.md` and `report/augmentation_comparison.md` for details.
+
+### Next
+
+- [x] Repeat the no-augmentation and horizontal-flip runs with additional seeds to check whether the validation gain is stable.
+- [x] Evaluate the selected horizontal-flip configuration once on the held-out test split.
+- [x] Review validation prediction overlays and common errors.
+- [x] Compare stretched resizing with aspect-preserving letterbox resizing on validation.
+- [ ] Consider a higher-resolution or pretrained-encoder experiment after reviewing the resize comparison.
+
+Across seeds 42, 43, and 44, horizontal flips improved validation Dice in each matched run. Mean Dice rose from 0.8084 to 0.8253 (+1.69 points), and mean IoU rose from 0.6784 to 0.7027 (+2.42 points). These runs used one fixed split, so they measure training-seed variability rather than split-to-split variability. Detailed results are in `report/augmentation_comparison.md`.
+
+The seed-42 flip checkpoint was evaluated once on the 26-image test split: Dice 0.8573 and IoU 0.7503, versus 0.8471 and 0.7348 for the no-augmentation baseline. The test scores are now final reporting metrics and should not guide further model tuning.
+
+Validation error review is saved in `report/validation_error_analysis/summary.md`, with per-image overlays, a Dice-sorted contact sheet, and pixel-level counts. The main observed issues are background false positives in cluttered scenes, missed person pixels in some images, and errors around thin boundaries/limbs.
+
+The aspect-preserving 256 × 256 letterbox run scored validation Dice 0.8187 and IoU 0.6930, below the matched stretch model's 0.8278 and 0.7062. Pixel accuracy rose because padding adds background pixels. Keep stretch as the current preprocessing choice; details and overlays are in `report/resize_comparison.md` and `report/resize_letterbox_validation_analysis/`.

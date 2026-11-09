@@ -1,0 +1,32 @@
+{
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "checkpoint": "results\\augmentation_flip\\best.pt",
+  "micro_dice": 0.8278180682964315,
+  "micro_iou": 0.7062197820208146,
+  "macro_image_dice": 0.833052497462006,
+  "macro_image_iou": 0.7225479715962497,
+  "pixel_accuracy": 0.93873291015625,
+  "lowest_dice_images": [
+    "FudanPed00040.png",
+    "PennPed00014.png",
+    "PennPed00013.png",
+    "FudanPed00041.png",
+    "FudanPed00002.png"
+  ],
+  "highest_false_negative_images": [
+    "PennPed00014.png",
+    "FudanPed00025.png",
+    "PennPed00013.png",
+    "PennPed00045.png",
+    "PennPed00051.png"
+  ],
+  "highest_false_positive_images": [
+    "FudanPed00040.png",
+    "FudanPed00041.png",
+    "FudanPed00016.png",
+    "PennPed00044.png",
+    "FudanPed00049.png"
+  ]
+}

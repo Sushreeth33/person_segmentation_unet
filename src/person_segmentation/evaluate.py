@@ -21,6 +21,8 @@ def main() -> None:
                         default=Path("report/dataset_analysis/split_seed42.json"))
     parser.add_argument("--split", choices=("train", "validation", "test", "all"), default="test")
     parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--resize-mode", choices=("stretch", "letterbox"),
+                        help="Override the checkpoint preprocessing mode")
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--output", type=Path, help="Optional path to save the evaluation JSON")
@@ -28,7 +30,12 @@ def main() -> None:
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     image_size = checkpoint["image_size"]
-    dataset = PennFudanDataset(args.data, augmentation="none", image_size=image_size)
+    resize_mode = args.resize_mode or checkpoint.get(
+        "resize_mode", checkpoint.get("config", {}).get("resize_mode", "stretch")
+    )
+    dataset = PennFudanDataset(
+        args.data, augmentation="none", image_size=image_size, resize_mode=resize_mode
+    )
     if args.split == "all":
         dataset.indices = list(range(len(dataset.images)))
     else:

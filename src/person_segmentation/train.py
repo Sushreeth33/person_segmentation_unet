@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--image-size", type=int, default=256)
+    parser.add_argument("--resize-mode", choices=("stretch", "letterbox"), default="stretch")
     parser.add_argument("--base-channels", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
@@ -106,8 +107,12 @@ def main() -> None:
 
     base_data = PennFudanDataset(args.data, image_size=args.image_size)
     splits = load_split_manifest(args.split_manifest, [path.name for path in base_data.images])
-    train_data = PennFudanDataset(args.data, splits["train"], args.augmentation, args.image_size)
-    validation_data = PennFudanDataset(args.data, splits["validation"], "none", args.image_size)
+    train_data = PennFudanDataset(
+        args.data, splits["train"], args.augmentation, args.image_size, args.resize_mode
+    )
+    validation_data = PennFudanDataset(
+        args.data, splits["validation"], "none", args.image_size, args.resize_mode
+    )
     train_loader = DataLoader(
         train_data, batch_size=args.batch_size, shuffle=True,
         num_workers=args.num_workers, pin_memory=torch.cuda.is_available(),
@@ -148,6 +153,7 @@ def main() -> None:
                 "model_config": {"in_channels": 3, "out_channels": 1,
                                  "base_channels": args.base_channels},
                 "image_size": args.image_size,
+                "resize_mode": args.resize_mode,
                 "epoch": epoch,
                 "validation_metrics": validation_metrics,
                 "config": config,

@@ -17,7 +17,8 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     """Load Penn-Fudan images and merge instance IDs into a person mask."""
 
     def __init__(self, root: str | Path, indices: list[int] | None = None,
-                 augmentation: str = "none", image_size: int = 256) -> None:
+                 augmentation: str = "none", image_size: int = 256,
+                 resize_mode: str = "stretch") -> None:
         self.root = Path(root)
         self.image_dir = self.root / "PNGImages"
         self.mask_dir = self.root / "PedMasks"
@@ -33,12 +34,15 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
             raise ValueError("image_size must be positive")
         if augmentation not in {"none", "flip", "zoom", "both"}:
             raise ValueError("augmentation must be one of: none, flip, zoom, both")
+        if resize_mode not in {"stretch", "letterbox"}:
+            raise ValueError("resize_mode must be one of: stretch, letterbox")
         missing = [p.name for p in self.images if not self.mask_path(p).is_file()]
         if missing:
             raise FileNotFoundError(f"Masks missing for {len(missing)} image(s), e.g. {missing[0]}")
         self.indices = list(range(len(self.images))) if indices is None else indices
         self.augmentation = augmentation
         self.image_size = image_size
+        self.resize_mode = resize_mode
 
     def __len__(self) -> int:
         return len(self.indices)
@@ -51,8 +55,7 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         # Penn-Fudan masks use 0 for background and distinct IDs for people.
         mask = Image.fromarray((mask_array > 0).astype(np.uint8) * 255)
 
-        image = image.resize((self.image_size, self.image_size), Image.Resampling.BILINEAR)
-        mask = mask.resize((self.image_size, self.image_size), Image.Resampling.NEAREST)
+        image, mask, _ = resize_pair(image, mask, self.image_size, self.resize_mode)
         if self.augmentation in {"flip", "both"} and random.random() < 0.5:
             image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             mask = mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
@@ -89,6 +92,63 @@ def _random_zoom(image: Image.Image, mask: Image.Image, size: int) -> tuple[Imag
     image_canvas.paste(image, (left, top))
     mask_canvas.paste(mask, (left, top))
     return image_canvas, mask_canvas
+
+
+def resize_pair(image: Image.Image, mask: Image.Image | None, size: int,
+                mode: str = "stretch") -> tuple[Image.Image, Image.Image | None, dict[str, object]]:
+    """Resize an image/mask pair and return geometry for optional inverse mapping."""
+    original_size = image.size
+    if mode == "stretch":
+        resized_image = image.resize((size, size), Image.Resampling.BILINEAR)
+        resized_mask = mask.resize((size, size), Image.Resampling.NEAREST) if mask is not None else None
+        transform: dict[str, object] = {
+            "mode": "stretch",
+            "original_size": list(original_size),
+            "resized_size": [size, size],
+            "padding": [0, 0, 0, 0],
+        }
+        return resized_image, resized_mask, transform
+
+    if mode != "letterbox":
+        raise ValueError("mode must be one of: stretch, letterbox")
+
+    original_width, original_height = original_size
+    scale = min(size / original_width, size / original_height)
+    resized_width = max(1, min(size, round(original_width * scale)))
+    resized_height = max(1, min(size, round(original_height * scale)))
+    left = (size - resized_width) // 2
+    top = (size - resized_height) // 2
+    right = size - resized_width - left
+    bottom = size - resized_height - top
+
+    resized_image = image.resize((resized_width, resized_height), Image.Resampling.BILINEAR)
+    image_canvas = Image.new("RGB", (size, size), (128, 128, 128))
+    image_canvas.paste(resized_image, (left, top))
+    if mask is None:
+        mask_canvas = None
+    else:
+        resized_mask = mask.resize((resized_width, resized_height), Image.Resampling.NEAREST)
+        mask_canvas = Image.new("L", (size, size), 0)
+        mask_canvas.paste(resized_mask, (left, top))
+
+    transform = {
+        "mode": "letterbox",
+        "original_size": list(original_size),
+        "resized_size": [resized_width, resized_height],
+        "padding": [left, top, right, bottom],
+    }
+    return image_canvas, mask_canvas, transform
+
+
+def restore_mask(mask: Image.Image, transform: dict[str, object]) -> Image.Image:
+    """Map a square prediction mask back to its original image dimensions."""
+    original_width, original_height = transform["original_size"]
+    if transform["mode"] == "stretch":
+        return mask.resize((int(original_width), int(original_height)), Image.Resampling.NEAREST)
+    left, top, right, bottom = transform["padding"]
+    size = mask.size[0]
+    cropped = mask.crop((int(left), int(top), size - int(right), size - int(bottom)))
+    return cropped.resize((int(original_width), int(original_height)), Image.Resampling.NEAREST)
 
 
 def load_split_manifest(path: str | Path, image_names: list[str]) -> dict[str, list[int]]:
