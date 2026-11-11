@@ -1,0 +1,14 @@
+{
+  "data": "data\\PennFudanPed_256",
+  "output": "results\\augmentation_zoom",
+  "split_manifest": "report\\dataset_analysis\\split_seed42.json",
+  "augmentation": "zoom",
+  "epochs": 30,
+  "batch_size": 4,
+  "image_size": 256,
+  "base_channels": 16,
+  "learning_rate": 0.001,
+  "seed": 42,
+  "num_workers": 0,
+  "device": "cpu"
+}

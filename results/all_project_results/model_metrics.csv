@@ -1,0 +1,12 @@
+run,seed,augmentation,resize_mode,best_epoch,val_loss,val_pixel_accuracy,val_precision,val_recall,val_specificity,val_dice,val_iou,test_loss,test_pixel_accuracy,test_precision,test_recall,test_specificity,test_dice,test_iou,status
+baseline,42,none,stretch,22,0.1994623,0.9345721,0.8086160,0.8177133,0.9592046,0.8131392,0.6851176,0.1623268,0.9508755,0.8142629,0.8827548,0.9632934,0.8471267,0.7347960,complete
+augmentation_flip,42,flip,stretch,29,0.1836983,0.9387329,0.8104085,0.8459920,0.9582816,0.8278181,0.7062198,0.1562839,0.9541608,0.8242563,0.8931308,0.9652862,0.8573125,0.7502598,complete_test_evaluated_once
+augmentation_repeats/seed43_none,43,none,stretch,25,0.2118270,0.9322333,0.8064354,0.8036335,0.9593406,0.8050320,0.6736850,,,,,,,validation_repeat,
+augmentation_repeats/seed43_flip,43,flip,stretch,27,0.2031853,0.9323987,0.7827248,0.8467353,0.9504555,0.8134728,0.6855913,,,,,,,validation_repeat,
+augmentation_repeats/seed44_none,44,none,stretch,24,0.2047294,0.9335516,0.8160435,0.7982625,0.9620690,0.8070550,0.6765233,,,,,,,validation_repeat,
+augmentation_repeats/seed44_flip,44,flip,stretch,28,0.1782123,0.9415540,0.8225111,0.8470684,0.9614704,0.8346091,0.7161624,,,,,,,validation_repeat,
+resize_letterbox_flip_seed42,42,flip,letterbox,24,0.1742538,0.9523297,0.8109232,0.8266040,0.9711497,0.8186885,0.6930336,,,,,,,validation_comparison,
+augmentation_zoom,42,zoom,stretch,,,,,,,,,,,,,,,incomplete_config_only,
+augmentation_flip_small_zoom_seed42,42,both_flip_0.9-1.1,stretch,29,0.1989266,0.9350476,0.8239830,0.7972037,0.9641035,0.8103722,0.6811981,0.1565642,0.9542407,0.8301761,0.8840680,0.9670326,0.8562749,0.7486720,proposed_model_complete
+augmentation_flip_small_zoom_seed43,43,both_flip_0.9-1.1,stretch,20,0.2138884,0.9302002,0.7805762,0.8333111,0.9506233,0.8060821,0.6751570,0.1945649,0.9433940,0.7742299,0.8933896,0.9525094,0.8295525,0.7087482,proposed_model_repeat_test_evaluated
+augmentation_flip_small_zoom_seed44,44,both_flip_0.9-1.1,stretch,29,0.2012930,0.9375378,0.8519060,0.7761331,0.9715601,0.8122562,0.6838649,0.1716306,0.9520880,0.8476448,0.8402919,0.9724676,0.8439523,0.7300324,proposed_model_repeat_test_evaluated

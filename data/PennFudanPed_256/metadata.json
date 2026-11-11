@@ -1,0 +1,17 @@
+{
+  "source_dataset": "C:\\Users\\SUSHREETH\\person_segmentation_unet\\data\\PennFudanPed",
+  "image_count": 170,
+  "image_size_width_height": [
+    256,
+    256
+  ],
+  "image_format": "RGB PNG (8-bit per channel)",
+  "mask_format": "grayscale PNG with values 0=background, 1=person",
+  "rgb_resize_interpolation": "bilinear",
+  "mask_resize_interpolation": "nearest",
+  "rgb_float_normalization": "Divide 8-bit RGB values by 255 when loading for a model",
+  "mask_values": [
+    0,
+    1
+  ]
+}

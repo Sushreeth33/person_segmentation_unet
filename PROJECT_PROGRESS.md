@@ -60,7 +60,7 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Evaluate the selected checkpoint on the held-out test split
 - [x] Record baseline settings and metrics
 
-**Progress: baseline complete; initial augmentation comparison complete.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs. The no-augmentation baseline's best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851); its held-out test scores were Dice 0.8471 and IoU 0.7348. A controlled horizontal-flip run used the same split, seed, model size, optimizer, and epoch budget. Its best validation checkpoint was from epoch 29 (Dice 0.8278, IoU 0.7062), gains of 1.47 and 2.11 percentage points. Test data was not used for this comparison. This is a modest improvement on one validation split, not yet evidence that the augmentation is reliably better. The zoom and combined variants were deferred because each CPU run takes a long time. See `report/baseline_results.md` and `report/augmentation_comparison.md` for details.
+**Progress: baseline and required augmentation comparison complete.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs. The no-augmentation baseline's best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851); its held-out test scores were Dice 0.8471 and IoU 0.7348. A controlled horizontal-flip run used the same split, seed, model size, optimizer, and epoch budget. Its best validation checkpoint was from epoch 29 (Dice 0.8278, IoU 0.7062), gains of 1.47 and 2.11 percentage points. Test data was not used for checkpoint selection. Horizontal flip plus small zoom was subsequently trained and repeated with seeds 43 and 44; see `report/augmentation_comparison.md` for details. The zoom-only variant remains unrun because it is not required by the project statement.
 
 ### Next
 
@@ -68,7 +68,16 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Evaluate the selected horizontal-flip configuration once on the held-out test split.
 - [x] Review validation prediction overlays and common errors.
 - [x] Compare stretched resizing with aspect-preserving letterbox resizing on validation.
-- [ ] Consider a higher-resolution or pretrained-encoder experiment after reviewing the resize comparison.
+- [x] Document the U-Net, training loss, Dice, and IoU formulas.
+- [x] Export standalone black-and-white prediction masks for the validation split.
+- [x] Gather model runs, metrics, checkpoints, histories, prediction masks, and analysis artifacts in one results folder.
+- [x] Complete the required horizontal-flip plus small-zoom proposed model comparison.
+- [x] Repeat the required proposed model with training seeds 43 and 44 and record each validation/test result.
+
+### Optional extensions (not requested by the project statement)
+
+- [ ] Try a higher-resolution input or a pretrained encoder.
+- [ ] Implement and compare person-instance Copy-Paste augmentation using validation metrics.
 
 Across seeds 42, 43, and 44, horizontal flips improved validation Dice in each matched run. Mean Dice rose from 0.8084 to 0.8253 (+1.69 points), and mean IoU rose from 0.6784 to 0.7027 (+2.42 points). These runs used one fixed split, so they measure training-seed variability rather than split-to-split variability. Detailed results are in `report/augmentation_comparison.md`.
 
@@ -77,3 +86,13 @@ The seed-42 flip checkpoint was evaluated once on the 26-image test split: Dice 
 Validation error review is saved in `report/validation_error_analysis/summary.md`, with per-image overlays, a Dice-sorted contact sheet, and pixel-level counts. The main observed issues are background false positives in cluttered scenes, missed person pixels in some images, and errors around thin boundaries/limbs.
 
 The aspect-preserving 256 × 256 letterbox run scored validation Dice 0.8187 and IoU 0.6930, below the matched stretch model's 0.8278 and 0.7062. Pixel accuracy rose because padding adds background pixels. Keep stretch as the current preprocessing choice; details and overlays are in `report/resize_comparison.md` and `report/resize_letterbox_validation_analysis/`.
+
+The U-Net architecture, exact 50/50 BCE-plus-soft-Dice training loss, pooled thresholded Dice/IoU evaluation formulas, code locations, and related papers are documented in `report/model_loss_and_metrics.md`.
+
+The seed-42 horizontal-flip checkpoint's 25 validation predictions are exported as original-size 8-bit grayscale masks in `report/validation_binary_predictions/` (0=black background, 255=white person). A ZIP copy is at `report/validation_binary_predictions.zip`.
+
+The required proposed model was trained with horizontal flips and a small 0.9–1.1 scale zoom, keeping the baseline setup fixed. Its best validation checkpoint was epoch 29 (pooled Dice 0.8104, IoU 0.6812); test Dice/IoU were 0.8563/0.7487. The combined model did not beat the baseline on validation Dice, so the results do not show a validation improvement from the proposed augmentation in this run. Full comparison is in `report/augmentation_comparison.md`; run outputs are in `results/augmentation_flip_small_zoom_seed42/` (local, Git-ignored).
+
+The required flip-plus-small-zoom model was repeated with training seeds 43 and 44 on the same fixed split and 30-epoch budget. The best checkpoints were epoch 20 (seed 43) and epoch 29 (seed 44). Validation Dice/IoU were 0.8061/0.6752 and 0.8123/0.6839; test Dice/IoU were 0.8296/0.7087 and 0.8440/0.7300. Across seeds 42–44, mean validation Dice/IoU were 0.8096/0.6801 and mean test Dice/IoU were 0.8433/0.7292. These runs measure training-seed variability only; detailed metrics and artifacts are in `report/augmentation_comparison.md` and the three seed-specific folders under `results/` (Git-ignored).
+
+All model run folders and supporting outputs have also been copied into the local consolidated bundle `results/all_project_results/`, with a score table, model artifacts, prediction masks, validation visualizations, dataset audit outputs, and report copies. The bundle is under the Git-ignored `results/` folder, so it is not pushed to GitHub by default.

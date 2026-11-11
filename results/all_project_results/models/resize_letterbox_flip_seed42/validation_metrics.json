@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\resize_letterbox_flip_seed42\\best.pt",
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.17425383865833283,
+    "pixel_accuracy": 0.9523297119140625,
+    "precision": 0.8109231717299927,
+    "recall": 0.8266040380459495,
+    "specificity": 0.9711496695972645,
+    "dice": 0.818688525351292,
+    "iou": 0.693033584216008
+  }
+}

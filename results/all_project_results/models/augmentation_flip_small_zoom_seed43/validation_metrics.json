@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\augmentation_flip_small_zoom_seed43\\best.pt",
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.21388841211795806,
+    "pixel_accuracy": 0.9302001953125,
+    "precision": 0.7805761538512063,
+    "recall": 0.8333111291860661,
+    "specificity": 0.9506232781147648,
+    "dice": 0.8060820641170426,
+    "iou": 0.6751570102855584
+  }
+}

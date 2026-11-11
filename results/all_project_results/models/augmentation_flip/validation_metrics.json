@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\augmentation_flip\\best.pt",
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.1836983460187912,
+    "pixel_accuracy": 0.93873291015625,
+    "precision": 0.8104085224143258,
+    "recall": 0.8459920345543277,
+    "specificity": 0.9582816028756223,
+    "dice": 0.8278180682964315,
+    "iou": 0.7062197820208146
+  }
+}

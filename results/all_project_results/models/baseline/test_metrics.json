@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\baseline\\best.pt",
+  "split": "test",
+  "images": 26,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.16232680357419527,
+    "pixel_accuracy": 0.950875502366286,
+    "precision": 0.8142629431715247,
+    "recall": 0.8827548406496576,
+    "specificity": 0.9632934201953494,
+    "dice": 0.8471267201782502,
+    "iou": 0.7347960396039604
+  }
+}

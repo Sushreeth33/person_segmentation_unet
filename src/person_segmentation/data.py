@@ -12,6 +12,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
+SMALL_ZOOM_SCALE_RANGE = (0.9, 1.1)
+
 
 class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     """Load Penn-Fudan images and merge instance IDs into a person mask."""
@@ -75,7 +77,7 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 
 def _random_zoom(image: Image.Image, mask: Image.Image, size: int) -> tuple[Image.Image, Image.Image]:
     """Apply the same random zoom and crop/pad to an image and its mask."""
-    scale = random.uniform(0.8, 1.25)
+    scale = random.uniform(*SMALL_ZOOM_SCALE_RANGE)
     scaled_size = max(1, round(size * scale))
     image = image.resize((scaled_size, scaled_size), Image.Resampling.BILINEAR)
     mask = mask.resize((scaled_size, scaled_size), Image.Resampling.NEAREST)
