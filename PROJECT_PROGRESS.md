@@ -74,7 +74,7 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Complete the required horizontal-flip plus small-zoom proposed model comparison.
 - [x] Repeat the required proposed model with training seeds 43 and 44 and record each validation/test result.
 - [x] Run the full 4-way tuned GPU comparison (`none`, `zoom`, `flip`, `both`) across seeds 42, 43, and 44 with cosine LR annealing and zoom-in `1.0–1.15` (`p = 0.5`).
-- [ ] Generate comparison graphs and held-out test mask overlay visualizations for S.No. 6.
+- [x] Generate comparison graphs and held-out test mask overlay visualizations for S.No. 6.
 - [ ] Assemble 10-slide presentation, 8-page max documentation report, and `MLproject_rollno_topic` submission folder (S.No. 8).
 
 ### Optional extensions (not requested by the project statement)
@@ -100,4 +100,4 @@ In Phase 2, after diagnosing zoom-out black padding, double resampling, and 30-e
 - Validation 3-seed means (`Dice / IoU`): `none` `0.8078 / 0.6776` → `zoom` `0.8168 / 0.6903` → `flip` `0.8277 / 0.7061` → `both` **`0.8298 / 0.7091`** (+2.20 / +3.15 pp).
 - Held-out test 3-seed means (`Dice / IoU`): `none` `0.8495 ± 0.0130 / 0.7385 ± 0.0197` → `zoom` `0.8529 / 0.7436` → `flip` `0.8629 / 0.7592` → `both` **`0.8668 ± 0.0016 / 0.7649 ± 0.0025`** (+1.73 / +2.64 pp; `20/26` test images improved, per-image IoU `p = 0.00130`).
 
-All model run folders (Phase 1 and Phase 2 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation visualizations, dataset audit outputs, and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).
+All model run folders (Phase 1 and Phase 2 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation/test visualizations, S.No. 5 & 6 comparison figures (`report/figures/`, `report/results_discussion.md`, `report/test_error_analysis/`), dataset audit outputs, and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).

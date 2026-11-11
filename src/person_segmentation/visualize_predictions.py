@@ -143,7 +143,7 @@ def main() -> None:
         x = (index % columns) * card_width
         y = (index // columns) * card_height
         worst_sheet.paste(card, (x, y))
-    worst_sheet.save(args.output / "validation_overlays_sorted_by_dice.png")
+    worst_sheet.save(args.output / f"{args.split}_overlays_sorted_by_dice.png")
 
     total_pixels = total_tp + total_fp + total_fn + total_tn
     micro_dice = (2 * total_tp) / (2 * total_tp + total_fp + total_fn)

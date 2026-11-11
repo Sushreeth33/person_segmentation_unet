@@ -1,0 +1,218 @@
+{
+  "split": "test",
+  "images": 26,
+  "checkpoint": "results\\tuned_both_seed42\\best.pt",
+  "threshold": 0.5,
+  "resize_mode": "stretch",
+  "mask_encoding": "8-bit grayscale: 0=background (black), 255=person (white)",
+  "predictions": [
+    {
+      "source_image": "FudanPed00007.png",
+      "prediction_mask": "FudanPed00007_prediction.png",
+      "width": 539,
+      "height": 381,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00008.png",
+      "prediction_mask": "FudanPed00008_prediction.png",
+      "width": 388,
+      "height": 454,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00009.png",
+      "prediction_mask": "FudanPed00009_prediction.png",
+      "width": 465,
+      "height": 441,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00023.png",
+      "prediction_mask": "FudanPed00023_prediction.png",
+      "width": 376,
+      "height": 378,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00024.png",
+      "prediction_mask": "FudanPed00024_prediction.png",
+      "width": 479,
+      "height": 378,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00027.png",
+      "prediction_mask": "FudanPed00027_prediction.png",
+      "width": 302,
+      "height": 363,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00029.png",
+      "prediction_mask": "FudanPed00029_prediction.png",
+      "width": 435,
+      "height": 404,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00036.png",
+      "prediction_mask": "FudanPed00036_prediction.png",
+      "width": 1017,
+      "height": 444,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00051.png",
+      "prediction_mask": "FudanPed00051_prediction.png",
+      "width": 448,
+      "height": 501,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00056.png",
+      "prediction_mask": "FudanPed00056_prediction.png",
+      "width": 565,
+      "height": 581,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00057.png",
+      "prediction_mask": "FudanPed00057_prediction.png",
+      "width": 482,
+      "height": 519,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00058.png",
+      "prediction_mask": "FudanPed00058_prediction.png",
+      "width": 522,
+      "height": 479,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00060.png",
+      "prediction_mask": "FudanPed00060_prediction.png",
+      "width": 517,
+      "height": 440,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00063.png",
+      "prediction_mask": "FudanPed00063_prediction.png",
+      "width": 486,
+      "height": 359,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00071.png",
+      "prediction_mask": "FudanPed00071_prediction.png",
+      "width": 363,
+      "height": 353,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "FudanPed00072.png",
+      "prediction_mask": "FudanPed00072_prediction.png",
+      "width": 375,
+      "height": 349,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00034.png",
+      "prediction_mask": "PennPed00034_prediction.png",
+      "width": 538,
+      "height": 422,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00035.png",
+      "prediction_mask": "PennPed00035_prediction.png",
+      "width": 623,
+      "height": 353,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00041.png",
+      "prediction_mask": "PennPed00041_prediction.png",
+      "width": 570,
+      "height": 422,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00056.png",
+      "prediction_mask": "PennPed00056_prediction.png",
+      "width": 618,
+      "height": 420,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00066.png",
+      "prediction_mask": "PennPed00066_prediction.png",
+      "width": 428,
+      "height": 375,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00070.png",
+      "prediction_mask": "PennPed00070_prediction.png",
+      "width": 466,
+      "height": 354,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00078.png",
+      "prediction_mask": "PennPed00078_prediction.png",
+      "width": 349,
+      "height": 372,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00088.png",
+      "prediction_mask": "PennPed00088_prediction.png",
+      "width": 375,
+      "height": 320,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00090.png",
+      "prediction_mask": "PennPed00090_prediction.png",
+      "width": 500,
+      "height": 370,
+      "black_background": 0,
+      "white_person": 255
+    },
+    {
+      "source_image": "PennPed00094.png",
+      "prediction_mask": "PennPed00094_prediction.png",
+      "width": 422,
+      "height": 349,
+      "black_background": 0,
+      "white_person": 255
+    }
+  ]
+}
