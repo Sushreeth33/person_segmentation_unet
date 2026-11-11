@@ -51,7 +51,7 @@ Checklist status based on the repository, the dataset audit, and the user's upda
 
 Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_image.csv`, `split_seed42.json`, `sample_images_masks.png`, and `instances_per_image.png`. The audit and split implementation is in `src/person_segmentation/analyze_dataset.py`; the 256 × 256 file export is in `src/person_segmentation/export_preprocessed.py`; the filename-aware loader and split validation are in `src/person_segmentation/data.py`.
 
-## S.No. 4 — Baseline Model Implementation
+## S.No. 4 — Model Implementation and Augmentation Comparison
 
 - [x] Implement the baseline U-Net architecture
 - [x] Configure binary segmentation loss and optimizer
@@ -60,7 +60,7 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Evaluate the selected checkpoint on the held-out test split
 - [x] Record baseline settings and metrics
 
-**Progress: baseline and required augmentation comparison complete.** The 16-channel U-Net was trained for 30 epochs on CPU using 256 × 256 inputs. The no-augmentation baseline's best validation checkpoint was from epoch 22 (Dice 0.8131, IoU 0.6851); its held-out test scores were Dice 0.8471 and IoU 0.7348. A controlled horizontal-flip run used the same split, seed, model size, optimizer, and epoch budget. Its best validation checkpoint was from epoch 29 (Dice 0.8278, IoU 0.7062), gains of 1.47 and 2.11 percentage points. Test data was not used for checkpoint selection. Horizontal flip plus small zoom was subsequently trained and repeated with seeds 43 and 44; see `report/augmentation_comparison.md` for details. The zoom-only variant remains unrun because it is not required by the project statement.
+**Progress: baseline and required augmentation comparison complete (Phase 1 CPU + Phase 2 tuned GPU).** The 16-channel U-Net was initially trained for 30 epochs on CPU using 256 × 256 inputs (`baseline` best val epoch 22: Dice 0.8131, IoU 0.6851, test Dice 0.8471, IoU 0.7348; `flip` best val epoch 29: Dice 0.8278, IoU 0.7062, test Dice 0.8573, IoU 0.7503; `both` with 0.9–1.1 zoom at `p = 1.0` averaged val Dice 0.8096 / IoU 0.6801 across seeds 42–44). After diagnosing zoom-out black padding, double resampling, and 30-epoch under-convergence, CUDA support (`torch 2.14.1+cu130`) was enabled on the RTX 4060 Laptop GPU and the zoom rule was updated to zoom-in `(1.0, 1.15)` at `p = 0.5` with single-step stretch resizing, 50 epochs, and cosine LR scheduling (`eta_min = 1e-5`). All four variants (`none`, `zoom`, `flip`, `both`) were then run across seeds 42–44 (`results/tuned_*`): `both` improved over `none` from val Dice/IoU `0.8078/0.6776` to `0.8298/0.7091` (+2.20 / +3.15 pp) and test Dice/IoU `0.8495/0.7385` to `0.8668/0.7649` (+1.73 / +2.64 pp, cutting test IoU seed SD from `±0.0197` to `±0.0025`). See `report/augmentation_comparison.md` for full tables and paired test statistics.
 
 ### Next
 
@@ -73,6 +73,9 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Gather model runs, metrics, checkpoints, histories, prediction masks, and analysis artifacts in one results folder.
 - [x] Complete the required horizontal-flip plus small-zoom proposed model comparison.
 - [x] Repeat the required proposed model with training seeds 43 and 44 and record each validation/test result.
+- [x] Run the full 4-way tuned GPU comparison (`none`, `zoom`, `flip`, `both`) across seeds 42, 43, and 44 with cosine LR annealing and zoom-in `1.0–1.15` (`p = 0.5`).
+- [ ] Generate comparison graphs and held-out test mask overlay visualizations for S.No. 6.
+- [ ] Assemble 10-slide presentation, 8-page max documentation report, and `MLproject_rollno_topic` submission folder (S.No. 8).
 
 ### Optional extensions (not requested by the project statement)
 
@@ -91,8 +94,10 @@ The U-Net architecture, exact 50/50 BCE-plus-soft-Dice training loss, pooled thr
 
 The seed-42 horizontal-flip checkpoint's 25 validation predictions are exported as original-size 8-bit grayscale masks in `report/validation_binary_predictions/` (0=black background, 255=white person). A ZIP copy is at `report/validation_binary_predictions.zip`.
 
-The required proposed model was trained with horizontal flips and a small 0.9–1.1 scale zoom, keeping the baseline setup fixed. Its best validation checkpoint was epoch 29 (pooled Dice 0.8104, IoU 0.6812); test Dice/IoU were 0.8563/0.7487. The combined model did not beat the baseline on validation Dice, so the results do not show a validation improvement from the proposed augmentation in this run. Full comparison is in `report/augmentation_comparison.md`; run outputs are in `results/augmentation_flip_small_zoom_seed42/` (local, Git-ignored).
+The Phase 1 30-epoch CPU `both` runs (0.9–1.1 scale at `p = 1.0`, seeds 42–44) averaged validation Dice/IoU `0.8096/0.6801` and test Dice/IoU `0.8433/0.7292`.
 
-The required flip-plus-small-zoom model was repeated with training seeds 43 and 44 on the same fixed split and 30-epoch budget. The best checkpoints were epoch 20 (seed 43) and epoch 29 (seed 44). Validation Dice/IoU were 0.8061/0.6752 and 0.8123/0.6839; test Dice/IoU were 0.8296/0.7087 and 0.8440/0.7300. Across seeds 42–44, mean validation Dice/IoU were 0.8096/0.6801 and mean test Dice/IoU were 0.8433/0.7292. These runs measure training-seed variability only; detailed metrics and artifacts are in `report/augmentation_comparison.md` and the three seed-specific folders under `results/` (Git-ignored).
+In Phase 2, after diagnosing zoom-out black padding, double resampling, and 30-epoch under-convergence, all four variants (`none`, `zoom`, `flip`, `both`) were trained cleanly on GPU (RTX 4060, `50` epochs, `--lr-scheduler cosine` with `eta_min = 1e-5`, single-step raw stretch resizing, zoom-in `1.0–1.15` at `p = 0.5`) across seeds 42, 43, and 44 (`results/tuned_*`):
+- Validation 3-seed means (`Dice / IoU`): `none` `0.8078 / 0.6776` → `zoom` `0.8168 / 0.6903` → `flip` `0.8277 / 0.7061` → `both` **`0.8298 / 0.7091`** (+2.20 / +3.15 pp).
+- Held-out test 3-seed means (`Dice / IoU`): `none` `0.8495 ± 0.0130 / 0.7385 ± 0.0197` → `zoom` `0.8529 / 0.7436` → `flip` `0.8629 / 0.7592` → `both` **`0.8668 ± 0.0016 / 0.7649 ± 0.0025`** (+1.73 / +2.64 pp; `20/26` test images improved, per-image IoU `p = 0.00130`).
 
-All model run folders and supporting outputs have also been copied into the local consolidated bundle `results/all_project_results/`, with a score table, model artifacts, prediction masks, validation visualizations, dataset audit outputs, and report copies. The bundle is under the Git-ignored `results/` folder, so it is not pushed to GitHub by default.
+All model run folders (Phase 1 and Phase 2 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation visualizations, dataset audit outputs, and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).

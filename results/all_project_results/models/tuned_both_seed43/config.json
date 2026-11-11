@@ -1,0 +1,22 @@
+{
+  "data": "data\\PennFudanPed",
+  "output": "results\\tuned_both_seed43",
+  "split_manifest": "report\\dataset_analysis\\split_seed42.json",
+  "augmentation": "both",
+  "epochs": 50,
+  "batch_size": 4,
+  "image_size": 256,
+  "resize_mode": "stretch",
+  "base_channels": 16,
+  "learning_rate": 0.001,
+  "lr_scheduler": "cosine",
+  "cache": true,
+  "seed": 43,
+  "num_workers": 0,
+  "device": "cuda",
+  "zoom_scale_range": [
+    1.0,
+    1.15
+  ],
+  "zoom_probability": 0.5
+}

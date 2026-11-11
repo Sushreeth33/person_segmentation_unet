@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\tuned_both_seed43\\best.pt",
+  "split": "test",
+  "images": 26,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.15067307536418623,
+    "pixel_accuracy": 0.9569038977989783,
+    "precision": 0.8369036685817618,
+    "recall": 0.8948892940473426,
+    "specificity": 0.9682087241788687,
+    "dice": 0.8649257149373952,
+    "iou": 0.7619992156633965
+  }
+}

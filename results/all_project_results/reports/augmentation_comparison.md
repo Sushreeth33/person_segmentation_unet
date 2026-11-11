@@ -29,9 +29,9 @@ The proposed model used both random horizontal flips (50% chance) and random sca
 | Horizontal flip only | 29 | 0.8278 | 0.7062 | 0.8331 ± 0.0864 | 0.8573 | 0.7503 |
 | Horizontal flip + small zoom | 29 | 0.8104 | 0.6812 | 0.8146 ± 0.0994 | 0.8563 | 0.7487 |
 
-The combined augmentation's validation Dice is 0.27 percentage points below the baseline and 1.74 points below flip-only. On the test split it is 0.91 points above the baseline and 0.10 points below flip-only in Dice. It is 1.39 points above baseline and 0.15 points below flip-only in IoU. The difference in validation and test ordering is a reminder that the test set is small; do not tune based on these test scores. The mean-image Dice and pooled Dice are both shown because the former weights each image equally, while the latter pools pixel counts.
+The combined augmentation's validation Dice is 0.27 percentage points below the baseline and 1.74 points below flip-only in this initial 30-epoch CPU setup. On the test split it is 0.91 points above the baseline and 0.10 points below flip-only in Dice. It is 1.39 points above baseline and 0.15 points below flip-only in IoU. The difference in validation and test ordering is a reminder that the test set is small; do not tune based on these test scores. The mean-image Dice and pooled Dice are both shown because the former weights each image equally, while the latter pools pixel counts.
 
-The formal baseline-versus-proposed comparison is now complete. On this run, adding small zoom to horizontal flips did not improve validation Dice over the no-augmentation baseline; the flip-only model remains the strongest validation result. The problem statement's comparison should still report baseline and flip-plus-zoom as the main pair, with flip-only as a useful intermediate ablation.
+The initial 30-epoch CPU baseline-versus-proposed comparison showed that adding bidirectional zoom (0.9–1.1 at 100% probability) with a constant 0.001 learning rate did not improve validation Dice over no augmentation; see the tuned GPU section below for the diagnosed fixes and updated full ablation. The problem statement's comparison reports baseline (`none`) and flip-plus-zoom (`both`) as the main pair, with `flip` and `zoom` as single-augmentation ablations.
 
 ### Proposed-model repeat runs across training seeds
 
@@ -59,14 +59,59 @@ After selecting horizontal flips from validation results, we evaluated the seed-
 
 The flip checkpoint gained 1.02 percentage points in Dice and 1.55 points in IoU on this test split. This is a favorable result for the selected configuration, but it is based on one small test set and one training seed. The test scores are reported as final evaluation; future model choices should continue to use validation data rather than these test results.
 
-Zoom-only was not run as a separate ablation; it is not needed to complete the stated baseline-versus-proposed comparison. Further experiments such as Copy-Paste remain optional extensions and should be selected using validation data.
+Zoom-only (`0.9–1.1` on CPU) was left unrun in Phase 1; instead, after diagnosing the causes of Phase 1 under-convergence, all four variants (`none`, `zoom`, `flip`, `both`) were trained cleanly across three seeds under the tuned GPU pipeline below.
+
+## Tuned GPU pipeline: full 4-way comparison and ablation (50 epochs, cosine LR, `1.0–1.15` zoom at `p = 0.5`)
+
+### Diagnosis of Phase 1 limitations and targeted fixes
+
+Reviewing Phase 1 histories and zoom behavior identified three training bottlenecks that masked the benefit of `flip + small zoom`:
+
+1. **Zoom-out black padding (`0.9–1.1` at `p = 1.0`):** Zooming out below `1.0` shrank images ~50% of the time and padded borders with solid black `(0, 0, 0)`, reducing foreground recall. Replacing this with zoom-in only (`SMALL_ZOOM_SCALE_RANGE = (1.0, 1.15)`) applied at `ZOOM_PROBABILITY = 0.5` preserves person framing and mixes zoomed and unzoomed views.
+2. **Double bilinear resampling:** Applying zoom to pre-resized `256 × 256` copies (`data/PennFudanPed_256/`) blurred edges twice. Loading from raw `data/PennFudanPed/` and resizing directly to the zoomed crop when `resize_mode == "stretch"` performs a single resampling step (`--cache` keeps decoded RGB/mask pairs in RAM).
+3. **Under-convergence and late-epoch LR oscillation:** With batch size `4` and constant `lr = 0.001` over `30` epochs, augmented runs had not stabilized cleanly. Switching to `--epochs 50` with `--lr-scheduler cosine` (`CosineAnnealingLR`, `eta_min = 1e-5`) on the RTX 4060 Laptop GPU (`device = cuda`) resolved late-epoch instability.
+
+### Tuned validation and one-time test results across seeds (`42`, `43`, `44`)
+
+All 12 runs share the fixed `119/25/26` `split_seed42.json` manifest, compact 16-channel U-Net, equal-weight `DiceBCELoss`, Adam (`lr = 0.001`), cosine schedule (`50` epochs, `eta_min = 1e-5`), batch size `4`, raw-source `256 × 256` stretch resizing, and RTX 4060 GPU training. Checkpoints were selected strictly by validation Dice; held-out test metrics (`26` images) were evaluated once per checkpoint afterward.
+
+| Variant | Seed | Best epoch | Val Precision | Val Recall | Val Dice | Val IoU | Test Precision | Test Recall | Test Dice | Test IoU |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `none` (baseline) | 42 | 28 | 0.8390 | 0.7752 | 0.8058 | 0.6748 | 0.8572 | 0.8693 | 0.8632 | 0.7593 |
+| `none` (baseline) | 43 | 29 | 0.8134 | 0.7926 | 0.8029 | 0.6707 | 0.8223 | 0.8754 | 0.8480 | 0.7361 |
+| `none` (baseline) | 44 | 43 | 0.8445 | 0.7870 | 0.8147 | 0.6874 | 0.8297 | 0.8450 | 0.8373 | 0.7201 |
+| `zoom` (ablation) | 42 | 28 | 0.8348 | 0.8131 | 0.8238 | 0.7004 | 0.8388 | 0.8798 | 0.8588 | 0.7525 |
+| `zoom` (ablation) | 43 | 37 | 0.8441 | 0.7854 | 0.8137 | 0.6859 | 0.8247 | 0.8804 | 0.8517 | 0.7417 |
+| `zoom` (ablation) | 44 | 43 | 0.8226 | 0.8032 | 0.8128 | 0.6846 | 0.8173 | 0.8816 | 0.8483 | 0.7365 |
+| `flip` (ablation) | 42 | 40 | 0.8235 | 0.8308 | 0.8271 | 0.7052 | 0.8520 | 0.9091 | 0.8796 | 0.7851 |
+| `flip` (ablation) | 43 | 42 | 0.8286 | 0.8223 | 0.8254 | 0.7027 | 0.8417 | 0.8909 | 0.8656 | 0.7630 |
+| `flip` (ablation) | 44 | 32 | 0.8047 | 0.8584 | 0.8307 | 0.7104 | 0.7709 | 0.9315 | 0.8436 | 0.7295 |
+| `both` (proposed) | 42 | 37 | 0.8048 | 0.8769 | 0.8393 | 0.7231 | 0.8177 | 0.9240 | 0.8676 | 0.7662 |
+| `both` (proposed) | 43 | 42 | 0.8220 | 0.8225 | 0.8223 | 0.6982 | 0.8369 | 0.8949 | 0.8649 | 0.7620 |
+| `both` (proposed) | 44 | 43 | 0.8205 | 0.8351 | 0.8277 | 0.7061 | 0.8252 | 0.9151 | 0.8678 | 0.7665 |
+
+### Three-seed summary (`Mean ± sample SD`)
+
+| Variant | Val Precision | Val Recall | Val Dice (`Mean ± SD`) | Val IoU (`Mean ± SD`) | Test Precision | Test Recall | Test Dice (`Mean ± SD`) | Test IoU (`Mean ± SD`) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `none` (baseline) | 0.8323 | 0.7849 | 0.8078 ± 0.0062 | 0.6776 ± 0.0087 | 0.8364 | 0.8632 | 0.8495 ± 0.0130 | 0.7385 ± 0.0197 |
+| `zoom` only | 0.8339 | 0.8006 | 0.8168 ± 0.0061 | 0.6903 ± 0.0088 | 0.8270 | 0.8806 | 0.8529 ± 0.0054 | 0.7436 ± 0.0082 |
+| `flip` only | 0.8189 | 0.8372 | 0.8277 ± 0.0027 | 0.7061 ± 0.0039 | 0.8215 | 0.9105 | 0.8629 ± 0.0181 | 0.7592 ± 0.0280 |
+| **`both` (proposed)** | **0.8158** | **0.8448** | **0.8298 ± 0.0087** | **0.7091 ± 0.0127** | **0.8266** | **0.9113** | **0.8668 ± 0.0016** | **0.7649 ± 0.0025** |
+
+### Statistical check and ablation interpretation
+
+- **Baseline (`none`) vs. Proposed (`both`):** Validation overlap rises by **+0.0220 Dice (+2.20 pp)** and **+0.0315 IoU (+3.15 pp)** — over `3.6×` the baseline seed SD (`±0.0087` IoU). Held-out test overlap rises by **+0.0173 Dice (+1.73 pp)** and **+0.0264 IoU (+2.64 pp)**, driven by a `+4.81 pp` increase in test Recall (`0.8632 → 0.9113`) with a small `-0.98 pp` Precision shift (`0.8364 → 0.8266`). Every `both` seed (`0.8649–0.8678` test Dice) beats every `none` seed (`0.8373–0.8632` test Dice).
+- **Per-image paired test check (`n = 26` test images, 3-seed mean per image):** Comparing `none` vs. `both`, the proposed model improves on **20/26** images (`+0.0164` Dice, `SD = 0.0257`, `t = 3.26`, two-sided sign-permutation `p = 0.00256`; `+0.0255` IoU, `SD = 0.0370`, `t = 3.51`, `p = 0.00130`).
+- **Contribution of each augmentation (ablation):** Horizontal flip accounts for the majority of the mean gain (`none → flip`: `+0.0199` val Dice / `+0.0285` val IoU; `+0.0134` test Dice / `+0.0207` test IoU; `19/26` test images improved, IoU `p = 0.01956`). Adding small zoom (`1.0–1.15×` at `p = 0.5`) yields a smaller incremental mean gain (`flip → both`: `+0.0021` val Dice / `+0.0030` val IoU; `+0.0039` test Dice / `+0.0057` test IoU; `14/26` test images improved, IoU `p = 0.77602`) while substantially reducing run-to-run variance on test (`±0.0280` `flip` IoU SD → `±0.0025` `both` IoU SD).
+- Further experiments such as Copy-Paste remain optional extensions outside the core brief and should be evaluated on validation data rather than test metrics.
 
 ## Reproducibility files
 
-- Flip model checkpoint: `results/augmentation_flip/best.pt` (ignored by Git).
-- Flip training settings and epoch history: `results/augmentation_flip/config.json` and `results/augmentation_flip/history.csv` (ignored by Git).
-- Re-evaluated validation metrics: `results/augmentation_flip/validation_metrics.json` (ignored by Git).
-- One-time held-out test metrics: `results/augmentation_flip/test_metrics.json` (ignored by Git).
-- Proposed flip-plus-small-zoom checkpoint, settings, histories, and validation/test metrics: `results/augmentation_flip_small_zoom_seed42/` (ignored by Git).
-- Repeat-seed checkpoints, settings, and histories: `results/augmentation_repeats/seed{42,43,44}_{none,flip}/` (ignored by Git; seed 42 artifacts are in the baseline and initial flip folders).
-- Training implementation: `src/person_segmentation/data.py` and `src/person_segmentation/train.py`.
+- **Phase 1 (30-epoch CPU) artifacts:**
+  - Flip model checkpoint & metrics: `results/augmentation_flip/` (copied to `results/all_project_results/models/augmentation_flip/`).
+  - Proposed `0.9–1.1` flip-plus-small-zoom runs: `results/augmentation_flip_small_zoom_seed{42,43,44}/` (copied to `results/all_project_results/models/`).
+  - Repeat-seed `none`/`flip` runs: `results/augmentation_repeats/seed{42,43,44}_{none,flip}/` (copied to `results/all_project_results/models/`).
+- **Phase 2 (50-epoch GPU, cosine LR, `1.0–1.15` zoom at `p = 0.5`) artifacts:**
+  - All 12 runs (`none`, `zoom`, `flip`, `both` × seeds `42, 43, 44`): `results/tuned_{none,zoom,flip,both}_seed{42,43,44}/` (copied to `results/all_project_results/models/tuned_{none,zoom,flip,both}_seed{42,43,44}/`).
+  - Training and dataset code: `src/person_segmentation/data.py` and `src/person_segmentation/train.py`.

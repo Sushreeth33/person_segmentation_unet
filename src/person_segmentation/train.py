@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .data import PennFudanDataset, load_split_manifest
+from .data import PennFudanDataset, SMALL_ZOOM_SCALE_RANGE, ZOOM_PROBABILITY, load_split_manifest
 from .model import DiceBCELoss, UNet
 
 
@@ -30,6 +30,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resize-mode", choices=("stretch", "letterbox"), default="stretch")
     parser.add_argument("--base-channels", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument("--lr-scheduler", choices=("none", "cosine"), default="none")
+    parser.add_argument("--cache", action="store_true", help="Cache decoded images/masks in RAM")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", default="auto", help="auto, cpu, cuda, or mps")
@@ -108,10 +110,12 @@ def main() -> None:
     base_data = PennFudanDataset(args.data, image_size=args.image_size)
     splits = load_split_manifest(args.split_manifest, [path.name for path in base_data.images])
     train_data = PennFudanDataset(
-        args.data, splits["train"], args.augmentation, args.image_size, args.resize_mode
+        args.data, splits["train"], args.augmentation, args.image_size, args.resize_mode,
+        cache=args.cache,
     )
     validation_data = PennFudanDataset(
-        args.data, splits["validation"], "none", args.image_size, args.resize_mode
+        args.data, splits["validation"], "none", args.image_size, args.resize_mode,
+        cache=args.cache,
     )
     train_loader = DataLoader(
         train_data, batch_size=args.batch_size, shuffle=True,
@@ -126,12 +130,19 @@ def main() -> None:
     model = UNet(base_channels=args.base_channels).to(device)
     criterion = DiceBCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    scheduler = (
+        torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=1e-5)
+        if args.lr_scheduler == "cosine" else None
+    )
     args.output.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
     config["data"] = str(args.data)
     config["output"] = str(args.output)
     config["split_manifest"] = str(args.split_manifest)
     config["device"] = str(device)
+    if args.augmentation in {"zoom", "both"}:
+        config["zoom_scale_range"] = list(SMALL_ZOOM_SCALE_RANGE)
+        config["zoom_probability"] = ZOOM_PROBABILITY
     (args.output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
 
     best_dice = -1.0
@@ -139,6 +150,8 @@ def main() -> None:
     for epoch in range(1, args.epochs + 1):
         train_metrics = run_epoch(model, train_loader, criterion, device, optimizer)
         validation_metrics = run_epoch(model, validation_loader, criterion, device)
+        if scheduler is not None:
+            scheduler.step()
         row = {"epoch": epoch, **{f"train_{k}": v for k, v in train_metrics.items()},
                **{f"validation_{k}": v for k, v in validation_metrics.items()}}
         history.append(row)

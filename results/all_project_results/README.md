@@ -48,6 +48,27 @@ The required flip-plus-small-zoom model was repeated with training seeds 42, 43,
 - Code is in `src/person_segmentation/`.
 - Tracked project reports remain in `report/`.
 
-Because `/results/` is excluded by `.gitignore`, this consolidated bundle is currently local to this computer and is not part of the GitHub repository.
+Because `/results/` is listed in `.gitignore`, raw training folders remain local unless force-added; this consolidated `results/all_project_results/` bundle is tracked in Git so checkpoints, metrics, and reports are preserved on GitHub.
 
-Required proposed model (flip + small 0.9–1.1 zoom) is complete. Its run files are under `models/augmentation_flip_small_zoom_seed42/`; validation pooled Dice/IoU are 0.8104/0.6812 and test pooled Dice/IoU are 0.8563/0.7487. See `reports/augmentation_comparison.md` for comparison and interpretation.
+## Phase 2: Tuned GPU 4-way comparison (`50` epochs, cosine LR, `1.0–1.15` zoom at `p = 0.5`)
+
+After diagnosing zoom-out black padding (`0.9–1.1` at `p = 1.0`), double bilinear resampling, and 30-epoch under-convergence in Phase 1, CUDA GPU training was enabled (RTX 4060 Laptop GPU) and all four modes (`none`, `zoom`, `flip`, `both`) were trained across seeds `42`, `43`, and `44` from raw `data/PennFudanPed/` using `--lr-scheduler cosine` (`eta_min = 1e-5`) and `--cache`:
+
+| Run (`models/tuned_*`) | Seed | Best epoch | Val Precision | Val Recall | Val Dice | Val IoU | Test Precision | Test Recall | Test Dice | Test IoU |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `tuned_none_seed42` | 42 | 28 | 0.8390 | 0.7752 | 0.8058 | 0.6748 | 0.8572 | 0.8693 | 0.8632 | 0.7593 |
+| `tuned_none_seed43` | 43 | 29 | 0.8134 | 0.7926 | 0.8029 | 0.6707 | 0.8223 | 0.8754 | 0.8480 | 0.7361 |
+| `tuned_none_seed44` | 44 | 43 | 0.8445 | 0.7870 | 0.8147 | 0.6874 | 0.8297 | 0.8450 | 0.8373 | 0.7201 |
+| `tuned_zoom_seed42` | 42 | 28 | 0.8348 | 0.8131 | 0.8238 | 0.7004 | 0.8388 | 0.8798 | 0.8588 | 0.7525 |
+| `tuned_zoom_seed43` | 43 | 37 | 0.8441 | 0.7854 | 0.8137 | 0.6859 | 0.8247 | 0.8804 | 0.8517 | 0.7417 |
+| `tuned_zoom_seed44` | 44 | 43 | 0.8226 | 0.8032 | 0.8128 | 0.6846 | 0.8173 | 0.8816 | 0.8483 | 0.7365 |
+| `tuned_flip_seed42` | 42 | 40 | 0.8235 | 0.8308 | 0.8271 | 0.7052 | 0.8520 | 0.9091 | 0.8796 | 0.7851 |
+| `tuned_flip_seed43` | 43 | 42 | 0.8286 | 0.8223 | 0.8254 | 0.7027 | 0.8417 | 0.8909 | 0.8656 | 0.7630 |
+| `tuned_flip_seed44` | 44 | 32 | 0.8047 | 0.8584 | 0.8307 | 0.7104 | 0.7709 | 0.9315 | 0.8436 | 0.7295 |
+| `tuned_both_seed42` | 42 | 37 | 0.8048 | 0.8769 | 0.8393 | 0.7231 | 0.8177 | 0.9240 | 0.8676 | 0.7662 |
+| `tuned_both_seed43` | 43 | 42 | 0.8220 | 0.8225 | 0.8223 | 0.6982 | 0.8369 | 0.8949 | 0.8649 | 0.7620 |
+| `tuned_both_seed44` | 44 | 43 | 0.8205 | 0.8351 | 0.8277 | 0.7061 | 0.8252 | 0.9151 | 0.8678 | 0.7665 |
+
+Three-seed `Mean ± sample SD` summary (`none` → `both`):
+- **Validation:** `none` `0.8078 ± 0.0062` Dice / `0.6776 ± 0.0087` IoU → `both` **`0.8298 ± 0.0087` Dice / `0.7091 ± 0.0127` IoU** (`+2.20` Dice pp / `+3.15` IoU pp).
+- **Held-out test (`26` images):** `none` `0.8495 ± 0.0130` Dice / `0.7385 ± 0.0197` IoU → `both` **`0.8668 ± 0.0016` Dice / `0.7649 ± 0.0025` IoU** (`+1.73` Dice pp / `+2.64` IoU pp; `20/26` test images improved, per-image IoU `p = 0.00130`). See `reports/augmentation_comparison.md` for details.

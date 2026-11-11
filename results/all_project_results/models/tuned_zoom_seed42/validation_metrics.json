@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\tuned_zoom_seed42\\best.pt",
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.19155727237462997,
+    "pixel_accuracy": 0.939459228515625,
+    "precision": 0.8348319379152959,
+    "recall": 0.8131205474841533,
+    "specificity": 0.9660899459638419,
+    "dice": 0.8238332214419426,
+    "iou": 0.7004391183807586
+  }
+}

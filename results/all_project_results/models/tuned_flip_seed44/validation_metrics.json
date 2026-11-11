@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\tuned_flip_seed44\\best.pt",
+  "split": "validation",
+  "images": 25,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.19102173268795014,
+    "pixel_accuracy": 0.9390789794921875,
+    "precision": 0.8047138711129955,
+    "recall": 0.8583714309754866,
+    "specificity": 0.9560911874948269,
+    "dice": 0.8306770509073205,
+    "iou": 0.7103914718785543
+  }
+}

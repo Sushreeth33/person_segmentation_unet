@@ -17,7 +17,7 @@ U-Net has a contracting encoder, a bottleneck, and an expanding decoder.
 3. **Decoder:** transposed convolutions double the spatial dimensions. At each level, the upsampled features are concatenated with features from the corresponding encoder level. These are the **skip connections**; they pass higher-resolution location and boundary information into the decoder.
 4. **Output layer:** a 1 × 1 convolution maps the final 16 feature channels to one logit channel.
 
-The trained baseline/flip models used 16 base channels, 30 epochs, batch size 4, Adam with learning rate 0.001, and CPU. The code's default base width is 32, but these experiments explicitly set it to 16 for CPU training.
+The initial CPU baseline/flip runs used 16 base channels, 30 epochs, batch size 4, constant Adam learning rate 0.001, and CPU. The subsequent tuned GPU comparison kept the exact same 16-channel U-Net, `DiceBCELoss`, Adam `0.001`, and batch size 4, while extending training to 50 epochs with cosine learning-rate annealing (`CosineAnnealingLR`, `eta_min = 1e-5`) and GPU (`cuda`) execution. The code's default base width is 32, so all project runs explicitly set `--base-channels 16`.
 
 ## Training loss: BCE plus soft Dice
 

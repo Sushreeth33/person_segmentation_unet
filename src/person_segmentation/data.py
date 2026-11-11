@@ -12,7 +12,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-SMALL_ZOOM_SCALE_RANGE = (0.9, 1.1)
+SMALL_ZOOM_SCALE_RANGE = (1.0, 1.15)
+ZOOM_PROBABILITY = 0.5
 
 
 class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
@@ -20,7 +21,7 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 
     def __init__(self, root: str | Path, indices: list[int] | None = None,
                  augmentation: str = "none", image_size: int = 256,
-                 resize_mode: str = "stretch") -> None:
+                 resize_mode: str = "stretch", cache: bool = False) -> None:
         self.root = Path(root)
         self.image_dir = self.root / "PNGImages"
         self.mask_dir = self.root / "PedMasks"
@@ -45,24 +46,42 @@ class PennFudanDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         self.augmentation = augmentation
         self.image_size = image_size
         self.resize_mode = resize_mode
+        self._cached_pairs: dict[int, tuple[Image.Image, Image.Image]] = {}
+        if cache:
+            for idx in self.indices:
+                self._cached_pairs[idx] = self._load_pair(idx)
+
+    def _load_pair(self, dataset_index: int) -> tuple[Image.Image, Image.Image]:
+        image_path = self.images[dataset_index]
+        with Image.open(image_path) as image_file, Image.open(self.mask_path(image_path)) as mask_file:
+            image = image_file.convert("RGB")
+            mask_array = np.asarray(mask_file)
+        # Penn-Fudan masks use 0 for background and distinct IDs for people.
+        mask = Image.fromarray((mask_array > 0).astype(np.uint8) * 255)
+        return image, mask
 
     def __len__(self) -> int:
         return len(self.indices)
 
     def __getitem__(self, item: int) -> tuple[torch.Tensor, torch.Tensor]:
-        image_path = self.images[self.indices[item]]
-        image = Image.open(image_path).convert("RGB")
-        mask = Image.open(self.mask_path(image_path))
-        mask_array = np.asarray(mask)
-        # Penn-Fudan masks use 0 for background and distinct IDs for people.
-        mask = Image.fromarray((mask_array > 0).astype(np.uint8) * 255)
+        dataset_index = self.indices[item]
+        if dataset_index in self._cached_pairs:
+            image, mask = self._cached_pairs[dataset_index]
+        else:
+            image, mask = self._load_pair(dataset_index)
 
-        image, mask, _ = resize_pair(image, mask, self.image_size, self.resize_mode)
+        apply_zoom = self.augmentation in {"zoom", "both"} and random.random() < ZOOM_PROBABILITY
+        if apply_zoom and self.resize_mode == "stretch":
+            # Resize directly from raw image to zoomed size to avoid double-resampling blur.
+            image, mask = _random_zoom(image, mask, self.image_size)
+        else:
+            image, mask, _ = resize_pair(image, mask, self.image_size, self.resize_mode)
+            if apply_zoom:
+                image, mask = _random_zoom(image, mask, self.image_size)
+
         if self.augmentation in {"flip", "both"} and random.random() < 0.5:
             image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             mask = mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-        if self.augmentation in {"zoom", "both"}:
-            image, mask = _random_zoom(image, mask, self.image_size)
 
         image_array = np.asarray(image, dtype=np.float32) / 255.0
         mask_array = (np.asarray(mask, dtype=np.float32) > 127).astype(np.float32)
