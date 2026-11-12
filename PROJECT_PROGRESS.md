@@ -80,7 +80,7 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 ### Optional extensions (not requested by the project statement)
 
 - [ ] Try a higher-resolution input or a pretrained encoder.
-- [ ] Implement and compare person-instance Copy-Paste augmentation using validation metrics.
+- [x] Implement and compare person-instance Copy-Paste augmentation using validation metrics.
 
 Across seeds 42, 43, and 44, horizontal flips improved validation Dice in each matched run. Mean Dice rose from 0.8084 to 0.8253 (+1.69 points), and mean IoU rose from 0.6784 to 0.7027 (+2.42 points). These runs used one fixed split, so they measure training-seed variability rather than split-to-split variability. Detailed results are in `report/augmentation_comparison.md`.
 

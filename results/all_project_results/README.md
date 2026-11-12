@@ -69,6 +69,17 @@ After diagnosing zoom-out black padding (`0.9–1.1` at `p = 1.0`), double bilin
 | `tuned_both_seed43` | 43 | 42 | 0.8220 | 0.8225 | 0.8223 | 0.6982 | 0.8369 | 0.8949 | 0.8649 | 0.7620 |
 | `tuned_both_seed44` | 44 | 43 | 0.8205 | 0.8351 | 0.8277 | 0.7061 | 0.8252 | 0.9151 | 0.8678 | 0.7665 |
 
-Three-seed `Mean ± sample SD` summary (`none` → `both`):
-- **Validation:** `none` `0.8078 ± 0.0062` Dice / `0.6776 ± 0.0087` IoU → `both` **`0.8298 ± 0.0087` Dice / `0.7091 ± 0.0127` IoU** (`+2.20` Dice pp / `+3.15` IoU pp).
-- **Held-out test (`26` images):** `none` `0.8495 ± 0.0130` Dice / `0.7385 ± 0.0197` IoU → `both` **`0.8668 ± 0.0016` Dice / `0.7649 ± 0.0025` IoU** (`+1.73` Dice pp / `+2.64` IoU pp; `20/26` test images improved, per-image IoU `p = 0.00130`). See `reports/augmentation_comparison.md` for details.
+Three-seed `Mean ± sample SD` summary (`none` → `both` → `both + copypaste`):
+- **Validation:** `none` `0.8078 ± 0.0062` Dice / `0.6776 ± 0.0087` IoU → `both` `0.8298 ± 0.0087` Dice / `0.7091 ± 0.0127` IoU → **`both_copypaste` `0.8514 ± 0.0091` Dice / `0.7414 ± 0.0138` IoU** (`+4.36` Dice pp / `+6.38` IoU pp over baseline).
+- **Held-out test (`26` images):** `none` `0.8495 ± 0.0130` Dice / `0.7385 ± 0.0197` IoU → `both` `0.8668 ± 0.0016` Dice / `0.7649 ± 0.0025` IoU → **`both_copypaste` `0.8726 ± 0.0045` Dice / `0.7740 ± 0.0070` IoU** (`+2.31` Dice pp / `+3.55` IoU pp over baseline; `22/26` test images improved, per-image IoU `p = 0.00049`). See `reports/augmentation_comparison.md` and `reports/results_discussion.md` for details.
+
+## Phase 3: Copy-Paste person-instance augmentation (`models/tuned_*copypaste*`)
+
+| Run (`models/tuned_*`) | Seed | Best epoch | Val Precision | Val Recall | Val Dice | Val IoU | Test Precision | Test Recall | Test Dice | Test IoU |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `tuned_copypaste_seed42` | 42 | 39 | 0.8300 | 0.8958 | 0.8616 | 0.7569 | 0.8101 | 0.9318 | 0.8667 | 0.7648 |
+| `tuned_copypaste_seed43` | 43 | 48 | 0.8264 | 0.8682 | 0.8468 | 0.7343 | 0.8125 | 0.9124 | 0.8595 | 0.7537 |
+| `tuned_copypaste_seed44` | 44 | 43 | 0.8348 | 0.8433 | 0.8390 | 0.7227 | 0.8321 | 0.8947 | 0.8623 | 0.7579 |
+| `tuned_both_copypaste_seed42` | 42 | 40 | 0.8281 | 0.8953 | 0.8604 | 0.7551 | 0.8372 | 0.9215 | 0.8773 | 0.7815 |
+| `tuned_both_copypaste_seed43` | 43 | 48 | 0.8240 | 0.8614 | 0.8422 | 0.7275 | 0.8260 | 0.9154 | 0.8684 | 0.7675 |
+| `tuned_both_copypaste_seed44` | 44 | 43 | 0.8510 | 0.8522 | 0.8516 | 0.7416 | 0.8434 | 0.9028 | 0.8721 | 0.7731 |

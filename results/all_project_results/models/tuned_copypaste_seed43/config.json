@@ -1,0 +1,25 @@
+{
+  "data": "data\\PennFudanPed",
+  "output": "results\\tuned_copypaste_seed43",
+  "split_manifest": "report\\dataset_analysis\\split_seed42.json",
+  "base_augmentation": "none",
+  "copy_paste_prob": 0.5,
+  "max_paste_instances": 2,
+  "epochs": 50,
+  "batch_size": 4,
+  "image_size": 256,
+  "resize_mode": "stretch",
+  "base_channels": 16,
+  "learning_rate": 0.001,
+  "lr_scheduler": "cosine",
+  "cache": true,
+  "seed": 43,
+  "num_workers": 0,
+  "device": "cuda",
+  "augmentation": "none+copypaste",
+  "training_cutouts": 290,
+  "copy_paste_scale_range": [
+    0.85,
+    1.15
+  ]
+}

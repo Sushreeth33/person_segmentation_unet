@@ -1,7 +1,7 @@
 {
   "split": "test",
   "images": 26,
-  "checkpoint": "results\\tuned_both_seed42\\best.pt",
+  "checkpoint": "results\\tuned_both_copypaste_seed42\\best.pt",
   "threshold": 0.5,
   "resize_mode": "stretch",
   "mask_encoding": "8-bit grayscale: 0=background (black), 255=person (white)",

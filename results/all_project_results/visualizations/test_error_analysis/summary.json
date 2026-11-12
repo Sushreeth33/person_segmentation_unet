@@ -2,31 +2,31 @@
   "split": "test",
   "images": 26,
   "threshold": 0.5,
-  "checkpoint": "results\\tuned_both_seed42\\best.pt",
-  "micro_dice": 0.8676046975404388,
-  "micro_iou": 0.7661676939634087,
-  "macro_image_dice": 0.8601812575544122,
-  "macro_image_iou": 0.7636815673540477,
-  "pixel_accuracy": 0.9565183199368991,
+  "checkpoint": "results\\tuned_both_copypaste_seed42\\best.pt",
+  "micro_dice": 0.8773201330656558,
+  "micro_iou": 0.7814517378505397,
+  "macro_image_dice": 0.87374876604838,
+  "macro_image_iou": 0.7838149693362729,
+  "pixel_accuracy": 0.9602637657752404,
   "lowest_dice_images": [
     "FudanPed00029.png",
     "FudanPed00036.png",
-    "PennPed00094.png",
-    "PennPed00041.png",
-    "FudanPed00056.png"
+    "FudanPed00007.png",
+    "PennPed00035.png",
+    "PennPed00094.png"
   ],
   "highest_false_negative_images": [
     "FudanPed00057.png",
-    "PennPed00070.png",
-    "PennPed00090.png",
     "FudanPed00036.png",
-    "FudanPed00058.png"
+    "PennPed00090.png",
+    "PennPed00035.png",
+    "FudanPed00056.png"
   ],
   "highest_false_positive_images": [
     "FudanPed00029.png",
-    "PennPed00094.png",
-    "PennPed00035.png",
     "FudanPed00007.png",
-    "FudanPed00056.png"
+    "PennPed00070.png",
+    "PennPed00078.png",
+    "PennPed00035.png"
   ]
 }

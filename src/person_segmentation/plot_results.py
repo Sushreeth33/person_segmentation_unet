@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import os
 import statistics
 from pathlib import Path
@@ -24,18 +23,30 @@ from .model import UNet
 from .train import resolve_device
 
 
-MODES = ("none", "zoom", "flip", "both")
+MODES = ("none", "zoom", "flip", "both", "copypaste", "both_copypaste")
 MODE_LABELS = {
     "none": "Baseline (none)",
-    "zoom": "Small Zoom (1.0-1.15)",
+    "zoom": "Zoom (1.0-1.15)",
     "flip": "Horizontal Flip",
-    "both": "Proposed (Flip + Zoom)",
+    "both": "Flip + Zoom",
+    "copypaste": "Copy-Paste only",
+    "both_copypaste": "Flip + Zoom + Copy-Paste",
+}
+MODE_SHORT = {
+    "none": "none",
+    "zoom": "zoom",
+    "flip": "flip",
+    "both": "both",
+    "copypaste": "copy-\npaste",
+    "both_copypaste": "both +\ncopy-paste",
 }
 MODE_COLORS = {
     "none": "#64748b",
     "zoom": "#f59e0b",
     "flip": "#0ea5e9",
     "both": "#10b981",
+    "copypaste": "#a855f7",
+    "both_copypaste": "#e11d48",
 }
 SEEDS = (42, 43, 44)
 
@@ -71,11 +82,11 @@ def _load_seed_values(results_dir: Path, split: str, metric: str) -> dict[str, l
 
 def plot_metric_bars(results_dir: Path, output_dir: Path) -> Path:
     """Plot 3-seed mean +- SD grouped bar chart for Validation and Held-out Test."""
-    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.2), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(15.0, 5.5), sharey=True)
     metric_keys = ("precision", "recall", "dice", "iou")
     metric_labels = ("Precision", "Recall", "Dice / F1", "IoU")
     x = np.arange(len(metric_keys))
-    width = 0.19
+    width = 0.13
 
     for ax, split, title in zip(
         axes,
@@ -86,20 +97,20 @@ def plot_metric_bars(results_dir: Path, output_dir: Path) -> Path:
         for idx, mode in enumerate(MODES):
             means = [stats[mode][k][0] for k in metric_keys]
             sds = [stats[mode][k][1] for k in metric_keys]
-            offset = (idx - 1.5) * width
+            offset = (idx - (len(MODES) - 1) / 2.0) * width
             bars = ax.bar(
                 x + offset,
                 means,
                 width,
                 yerr=sds,
-                capsize=3,
+                capsize=2.5,
                 label=MODE_LABELS[mode],
                 color=MODE_COLORS[mode],
                 edgecolor="#1e293b",
-                linewidth=0.5,
+                linewidth=0.45,
                 alpha=0.92,
             )
-            if mode in ("none", "both"):
+            if mode in ("none", "both_copypaste"):
                 for bar, mean_val, sd_val in zip(bars, means, sds):
                     ax.text(
                         bar.get_x() + bar.get_width() / 2,
@@ -107,8 +118,8 @@ def plot_metric_bars(results_dir: Path, output_dir: Path) -> Path:
                         f"{mean_val:.3f}",
                         ha="center",
                         va="bottom",
-                        fontsize=7.5,
-                        fontweight="bold" if mode == "both" else "normal",
+                        fontsize=7.2,
+                        fontweight="bold" if mode == "both_copypaste" else "normal",
                         color="#0f172a",
                     )
         ax.set_xticks(x)
@@ -120,12 +131,12 @@ def plot_metric_bars(results_dir: Path, output_dir: Path) -> Path:
             ax.set_ylabel("Score (threshold = 0.5)", fontsize=10)
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=4, frameon=True, bbox_to_anchor=(0.5, 0.99))
+    fig.legend(handles, labels, loc="upper center", ncol=3, frameon=True, bbox_to_anchor=(0.5, 1.01))
     fig.suptitle(
-        "U-Net Augmentation Comparison & Ablation (50 epochs, cosine LR, 16 base channels)",
+        "U-Net Augmentation Comparison & Copy-Paste Ablation (50 epochs, cosine LR, 16 base channels)",
         fontsize=13,
         fontweight="bold",
-        y=1.05,
+        y=1.08,
     )
     fig.tight_layout()
     out_path = output_dir / "augmentation_ablation_bar.png"
@@ -149,37 +160,36 @@ def _load_history_arrays(results_dir: Path, mode: str, column: str) -> tuple[np.
 
 
 def plot_training_curves(results_dir: Path, output_dir: Path) -> Path:
-    """Plot 50-epoch train/validation loss and validation Dice curves across variants."""
-    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.0))
+    """Plot 50-epoch train/validation loss and validation Dice curves across all 6 variants."""
+    fig, axes = plt.subplots(1, 2, figsize=(14.0, 5.2))
 
-    # Left: Train & Validation Loss for Baseline (none) vs Proposed (both)
     ax_loss = axes[0]
-    for mode in ("none", "both"):
+    for mode in ("none", "both", "both_copypaste"):
         ep, tr_m, _ = _load_history_arrays(results_dir, mode, "train_loss")
         _, va_m, va_sd = _load_history_arrays(results_dir, mode, "validation_loss")
         color = MODE_COLORS[mode]
-        ax_loss.plot(ep, tr_m, linestyle="--", linewidth=1.6, color=color, alpha=0.7, label=f"{MODE_LABELS[mode]} Train")
-        ax_loss.plot(ep, va_m, linestyle="-", linewidth=2.2, color=color, label=f"{MODE_LABELS[mode]} Val")
-        ax_loss.fill_between(ep, va_m - va_sd, va_m + va_sd, color=color, alpha=0.14)
+        ax_loss.plot(ep, tr_m, linestyle="--", linewidth=1.4, color=color, alpha=0.65, label=f"{MODE_LABELS[mode]} Train")
+        ax_loss.plot(ep, va_m, linestyle="-", linewidth=2.1, color=color, label=f"{MODE_LABELS[mode]} Val")
+        ax_loss.fill_between(ep, va_m - va_sd, va_m + va_sd, color=color, alpha=0.11)
     ax_loss.set_title("Training & Validation Loss (Mean ± SD across 3 seeds)", fontsize=11, fontweight="bold")
     ax_loss.set_xlabel("Epoch")
     ax_loss.set_ylabel("Dice + BCE Loss")
+    ax_loss.set_ylim(0.0, 1.35)
     ax_loss.grid(True, linestyle="--", alpha=0.35)
-    ax_loss.legend(fontsize=8.5, loc="upper right")
+    ax_loss.legend(fontsize=8.0, loc="upper right")
 
-    # Right: Validation Dice trajectories for all 4 variants
     ax_dice = axes[1]
     for mode in MODES:
         ep, va_m, va_sd = _load_history_arrays(results_dir, mode, "validation_dice")
         color = MODE_COLORS[mode]
-        ax_dice.plot(ep, va_m, linewidth=2.2, color=color, label=MODE_LABELS[mode])
-        ax_dice.fill_between(ep, va_m - va_sd, va_m + va_sd, color=color, alpha=0.13)
-    ax_dice.set_title("Validation Dice over 50 Epochs (All 4 Variants)", fontsize=11, fontweight="bold")
+        ax_dice.plot(ep, va_m, linewidth=2.1, color=color, label=MODE_LABELS[mode])
+        ax_dice.fill_between(ep, va_m - va_sd, va_m + va_sd, color=color, alpha=0.10)
+    ax_dice.set_title("Validation Dice over 50 Epochs (All 6 Variants)", fontsize=11, fontweight="bold")
     ax_dice.set_xlabel("Epoch")
     ax_dice.set_ylabel("Pooled Validation Dice")
-    ax_dice.set_ylim(0.50, 0.86)
+    ax_dice.set_ylim(0.50, 0.87)
     ax_dice.grid(True, linestyle="--", alpha=0.35)
-    ax_dice.legend(fontsize=8.5, loc="lower right")
+    ax_dice.legend(fontsize=8.2, loc="lower right")
 
     fig.tight_layout()
     out_path = output_dir / "training_curves_none_vs_both.png"
@@ -189,8 +199,8 @@ def plot_training_curves(results_dir: Path, output_dir: Path) -> Path:
 
 
 def plot_seed_variability(results_dir: Path, output_dir: Path) -> Path:
-    """Plot individual seed points and Mean ± SD intervals for Validation & Test IoU."""
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), sharey=True)
+    """Plot individual seed points and Mean +- SD intervals for Validation & Test IoU."""
+    fig, axes = plt.subplots(1, 2, figsize=(13.8, 5.0), sharey=True)
     x = np.arange(len(MODES))
 
     for ax, split, title in zip(
@@ -203,17 +213,25 @@ def plot_seed_variability(results_dir: Path, output_dir: Path) -> Path:
             vals = raw[mode]
             mean_v = statistics.mean(vals)
             sd_v = statistics.stdev(vals)
-            jitter = np.array([-0.08, 0.0, 0.08])
-            ax.scatter(np.full(3, idx) + jitter, vals, color=MODE_COLORS[mode], s=55, zorder=4, edgecolors="#0f172a", linewidths=0.7)
+            jitter = np.array([-0.09, 0.0, 0.09])
+            ax.scatter(
+                np.full(3, idx) + jitter,
+                vals,
+                color=MODE_COLORS[mode],
+                s=52,
+                zorder=4,
+                edgecolors="#0f172a",
+                linewidths=0.7,
+            )
             ax.errorbar(
                 idx,
                 mean_v,
                 yerr=sd_v,
                 fmt="_",
-                markersize=18,
-                markeredgewidth=2.5,
-                elinewidth=2.0,
-                capsize=6,
+                markersize=16,
+                markeredgewidth=2.3,
+                elinewidth=1.8,
+                capsize=5,
                 color="#0f172a",
                 zorder=5,
             )
@@ -223,19 +241,19 @@ def plot_seed_variability(results_dir: Path, output_dir: Path) -> Path:
                 f"{mean_v:.4f}\n(±{sd_v:.4f})",
                 ha="center",
                 va="bottom",
-                fontsize=8.2,
+                fontsize=7.8,
                 color="#0f172a",
             )
         ax.set_xticks(x)
-        ax.set_xticklabels(["none", "zoom", "flip", "both"], fontsize=10)
-        ax.set_ylim(0.65, 0.81)
+        ax.set_xticklabels([MODE_SHORT[m] for m in MODES], fontsize=9)
+        ax.set_ylim(0.65, 0.815)
         ax.grid(axis="y", linestyle="--", alpha=0.35)
         ax.set_title(title, fontsize=11, fontweight="bold")
         if split == "validation":
             ax.set_ylabel("Pooled IoU Score", fontsize=10)
 
     fig.suptitle(
-        "Seed-to-Seed Consistency: Flip + Small Zoom Reduces Test IoU SD to ±0.0025",
+        "Seed-to-Seed Consistency across All 6 Variants (Best Test Mean: 0.7740 ± 0.0070)",
         fontsize=12.5,
         fontweight="bold",
         y=1.02,
@@ -252,7 +270,7 @@ def _per_image_test_arrays(
     results_dir: Path,
     split_manifest: Path,
     device: torch.device,
-) -> tuple[list[str], dict[str, np.ndarray], dict[str, dict[int, np.ndarray]], np.ndarray]:
+) -> tuple[list[str], dict[str, np.ndarray], dict[str, dict[int, np.ndarray]], np.ndarray, list[np.ndarray]]:
     """Compute per-image test IoU arrays across seeds and collect seed-42 binary predictions."""
     ds = PennFudanDataset(data_dir, augmentation="none", image_size=256, resize_mode="stretch")
     splits = load_split_manifest(split_manifest, [p.name for p in ds.images])
@@ -260,23 +278,21 @@ def _per_image_test_arrays(
     filenames = [ds.images[i].name for i in test_indices]
 
     iou_by_mode: dict[str, np.ndarray] = {}
-    dice_by_mode: dict[str, np.ndarray] = {}
-    preds_s42: dict[str, dict[int, np.ndarray]] = {"none": {}, "both": {}}
+    preds_s42: dict[str, dict[int, np.ndarray]] = {"none": {}, "both": {}, "both_copypaste": {}}
     targets: list[np.ndarray] = []
 
-    for idx_pos, ds_idx in enumerate(test_indices):
+    for ds_idx in test_indices:
         _, msk = ds[ds_idx]
         targets.append(msk[0].numpy() >= 0.5)
 
-    for mode in ("none", "both"):
+    for mode in ("none", "both", "both_copypaste"):
         seed_ious = []
-        seed_dices = []
         for seed in SEEDS:
             ckpt = torch.load(results_dir / f"tuned_{mode}_seed{seed}" / "best.pt", map_location="cpu", weights_only=False)
             model = UNet(**ckpt["model_config"]).to(device)
             model.load_state_dict(ckpt["model_state_dict"])
             model.eval()
-            ious, dices = [], []
+            ious = []
             with torch.no_grad():
                 for pos, ds_idx in enumerate(test_indices):
                     img, _ = ds[ds_idx]
@@ -288,11 +304,8 @@ def _per_image_test_arrays(
                     fp = np.count_nonzero(pred & ~tgt)
                     fn = np.count_nonzero(~pred & tgt)
                     ious.append(tp / (tp + fp + fn) if (tp + fp + fn) else 1.0)
-                    dices.append((2 * tp) / (2 * tp + fp + fn) if (2 * tp + fp + fn) else 1.0)
             seed_ious.append(ious)
-            seed_dices.append(dices)
         iou_by_mode[mode] = np.mean(seed_ious, axis=0)
-        dice_by_mode[mode] = np.mean(seed_dices, axis=0)
 
     return filenames, iou_by_mode, preds_s42, np.asarray(test_indices), targets
 
@@ -302,12 +315,12 @@ def plot_per_image_test_deltas(
     iou_by_mode: dict[str, np.ndarray],
     output_dir: Path,
 ) -> Path:
-    """Plot paired per-image 3-seed test IoU change (both - none) for all 26 test images."""
-    diffs = iou_by_mode["both"] - iou_by_mode["none"]
+    """Plot paired per-image 3-seed test IoU change (both_copypaste - none) for all 26 test images."""
+    diffs = iou_by_mode["both_copypaste"] - iou_by_mode["none"]
     order = np.argsort(diffs)
     sorted_names = [filenames[i] for i in order]
     sorted_diffs = diffs[order]
-    colors = ["#10b981" if d > 0 else "#ef4444" for d in sorted_diffs]
+    colors = ["#e11d48" if d < 0 else "#10b981" for d in sorted_diffs]
 
     fig, ax = plt.subplots(figsize=(10.5, 7.2))
     y = np.arange(len(sorted_names))
@@ -317,10 +330,10 @@ def plot_per_image_test_deltas(
     ax.axvline(mean_gain, color="#0284c7", linestyle="--", linewidth=1.4, label=f"Mean gain: {mean_gain:+.2f} pp")
     ax.set_yticks(y)
     ax.set_yticklabels(sorted_names, fontsize=8.5)
-    ax.set_xlabel("3-Seed Mean Test IoU Change: Proposed (both) − Baseline (none) [percentage points]", fontsize=10)
+    ax.set_xlabel("3-Seed Mean Test IoU Change: Flip+Zoom+Copy-Paste − Baseline (none) [percentage points]", fontsize=10)
     wins = int(np.sum(diffs > 0))
     ax.set_title(
-        f"Per-Image Test IoU Gain across All 26 Held-out Images ({wins}/26 improved, paired p = 0.0013)",
+        f"Per-Image Test IoU Gain across All 26 Held-out Images ({wins}/26 improved, paired p = 0.00049)",
         fontsize=11.5,
         fontweight="bold",
     )
@@ -357,19 +370,17 @@ def plot_test_mask_comparison_grid(
     iou_by_mode: dict[str, np.ndarray],
     output_dir: Path,
 ) -> Path:
-    """Create a 5-row visual comparison grid of test masks (Baseline none vs Proposed both)."""
+    """Create a 5-row visual comparison grid across Baseline, Flip+Zoom, and +Copy-Paste."""
     ds = PennFudanDataset(data_dir, augmentation="none", image_size=256, resize_mode="stretch")
-    diffs = iou_by_mode["both"] - iou_by_mode["none"]
-    both_mean = iou_by_mode["both"]
+    diffs = iou_by_mode["both_copypaste"] - iou_by_mode["none"]
+    cp_mean = iou_by_mode["both_copypaste"]
 
-    # Pick 5 diverse, interpretable test examples without cherry-picking only wins:
-    # top 2 gains, lowest overall proposed IoU, highest overall proposed IoU, and slight negative diff
     selected_positions: list[int] = []
     for pos in [
         int(np.argmax(diffs)),
         int(np.argsort(diffs)[-2]),
-        int(np.argmin(both_mean)),
-        int(np.argmax(both_mean)),
+        int(np.argmin(cp_mean)),
+        int(np.argmax(cp_mean)),
         int(np.argmin(diffs)),
     ]:
         if pos not in selected_positions:
@@ -381,11 +392,12 @@ def plot_test_mask_comparison_grid(
     pad = 8
     col_labels = (
         "Input Image",
-        "Ground Truth Mask",
-        "Baseline (none) Errors",
-        "Proposed (both) Errors",
+        "Ground Truth",
+        "Baseline (none)",
+        "Flip + Zoom (both)",
+        "+ Copy-Paste",
     )
-    canvas_w = size * 4 + pad * 5
+    canvas_w = size * 5 + pad * 6
     canvas_h = header_h + len(selected_positions) * (size + row_title_h + pad) + pad
     canvas = Image.new("RGB", (canvas_w, canvas_h), "white")
     draw = ImageDraw.Draw(canvas)
@@ -402,12 +414,14 @@ def plot_test_mask_comparison_grid(
         tgt = targets[pos]
         p_none = preds_s42["none"][ds_idx]
         p_both = preds_s42["both"][ds_idx]
+        p_cp = preds_s42["both_copypaste"][ds_idx]
         iou_n = _mask_iou(p_none, tgt)
         iou_b = _mask_iou(p_both, tgt)
+        iou_c = _mask_iou(p_cp, tgt)
 
         row_label = (
-            f"{image_path.name}  |  Seed-42 IoU: Baseline {iou_n:.3f} -> Proposed {iou_b:.3f} "
-            f"({iou_b - iou_n:+.3f})  |  Errors: TP green / FP red / FN blue"
+            f"{image_path.name}  |  Seed-42 IoU: none {iou_n:.3f} -> both {iou_b:.3f} -> +CopyPaste {iou_c:.3f} "
+            f"({iou_c - iou_n:+.3f})  |  TP green / FP red / FN blue"
         )
         draw.text((pad + 4, y_cursor + 5), row_label, fill="black")
         y_row = y_cursor + row_title_h
@@ -418,6 +432,7 @@ def plot_test_mask_comparison_grid(
             gt_rgb,
             _error_map(tgt, p_none),
             _error_map(tgt, p_both),
+            _error_map(tgt, p_cp),
         )
         for col_idx, panel in enumerate(panels):
             canvas.paste(panel, (pad + col_idx * (size + pad), y_row))

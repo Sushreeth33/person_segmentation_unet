@@ -1,0 +1,15 @@
+{
+  "checkpoint": "results\\tuned_copypaste_seed42\\best.pt",
+  "split": "test",
+  "images": 26,
+  "threshold": 0.5,
+  "metrics": {
+    "loss": 0.15272725889315972,
+    "pixel_accuracy": 0.9558064387394831,
+    "precision": 0.810113177576279,
+    "recall": 0.9317798593956372,
+    "specificity": 0.9601863152774781,
+    "dice": 0.8666974684149314,
+    "iou": 0.7647538448561869
+  }
+}

@@ -104,7 +104,26 @@ All 12 runs share the fixed `119/25/26` `split_seed42.json` manifest, compact 16
 - **Baseline (`none`) vs. Proposed (`both`):** Validation overlap rises by **+0.0220 Dice (+2.20 pp)** and **+0.0315 IoU (+3.15 pp)** — over `3.6×` the baseline seed SD (`±0.0087` IoU). Held-out test overlap rises by **+0.0173 Dice (+1.73 pp)** and **+0.0264 IoU (+2.64 pp)**, driven by a `+4.81 pp` increase in test Recall (`0.8632 → 0.9113`) with a small `-0.98 pp` Precision shift (`0.8364 → 0.8266`). Every `both` seed (`0.8649–0.8678` test Dice) beats every `none` seed (`0.8373–0.8632` test Dice).
 - **Per-image paired test check (`n = 26` test images, 3-seed mean per image):** Comparing `none` vs. `both`, the proposed model improves on **20/26** images (`+0.0164` Dice, `SD = 0.0257`, `t = 3.26`, two-sided sign-permutation `p = 0.00256`; `+0.0255` IoU, `SD = 0.0370`, `t = 3.51`, `p = 0.00130`).
 - **Contribution of each augmentation (ablation):** Horizontal flip accounts for the majority of the mean gain (`none → flip`: `+0.0199` val Dice / `+0.0285` val IoU; `+0.0134` test Dice / `+0.0207` test IoU; `19/26` test images improved, IoU `p = 0.01956`). Adding small zoom (`1.0–1.15×` at `p = 0.5`) yields a smaller incremental mean gain (`flip → both`: `+0.0021` val Dice / `+0.0030` val IoU; `+0.0039` test Dice / `+0.0057` test IoU; `14/26` test images improved, IoU `p = 0.77602`) while substantially reducing run-to-run variance on test (`±0.0280` `flip` IoU SD → `±0.0025` `both` IoU SD).
-- Further experiments such as Copy-Paste remain optional extensions outside the core brief and should be evaluated on validation data rather than test metrics.
+- Further experiments such as Copy-Paste were evaluated in Phase 3 below as an optional extension.
+
+## Phase 3: Copy-Paste person-instance augmentation (optional extension)
+
+Using raw per-person instance masks strictly from the `119` training images (`290` pedestrian cutouts with `area >= 150 px`, `h >= 20`, `w >= 8`; never touching validation or test), `src/person_segmentation/copypaste.py` and `src/person_segmentation/train_copypaste.py` apply Copy-Paste at `p = 0.5` (`1–2` donor instances per image, horizontal flip `p = 0.5`, scale jitter `0.85–1.15×`, grounded vertical placement `±28 px`, `max_overlap <= 0.45`, and `0.8 px` soft RGB boundary feathering with crisp binary mask union). Both standalone `copypaste` and `both + copypaste` (`Flip + Small Zoom + Copy-Paste`) were trained under the exact same 50-epoch cosine-LR GPU setup across seeds `42, 43, 44`:
+
+| Variant | Seed | Val Precision | Val Recall | Val Dice | Val IoU | Test Precision | Test Recall | Test Dice | Test IoU |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `copypaste` only | 42 | 0.8300 | 0.8958 | 0.8616 | 0.7569 | 0.8101 | 0.9318 | 0.8667 | 0.7648 |
+| `copypaste` only | 43 | 0.8264 | 0.8682 | 0.8468 | 0.7343 | 0.8125 | 0.9124 | 0.8595 | 0.7537 |
+| `copypaste` only | 44 | 0.8348 | 0.8433 | 0.8390 | 0.7227 | 0.8321 | 0.8947 | 0.8623 | 0.7579 |
+| **`copypaste` Mean ± SD** | — | 0.8304 | 0.8691 | **0.8491 ± 0.0115** | **0.7379 ± 0.0174** | 0.8182 | 0.9130 | **0.8628 ± 0.0036** | **0.7588 ± 0.0056** |
+| `both + copypaste` | 42 | 0.8281 | 0.8953 | 0.8604 | 0.7551 | 0.8372 | 0.9215 | 0.8773 | 0.7815 |
+| `both + copypaste` | 43 | 0.8240 | 0.8614 | 0.8422 | 0.7275 | 0.8260 | 0.9154 | 0.8684 | 0.7675 |
+| `both + copypaste` | 44 | 0.8510 | 0.8522 | 0.8516 | 0.7416 | 0.8434 | 0.9028 | 0.8721 | 0.7731 |
+| **`both + copypaste` Mean ± SD** | — | **0.8344** | **0.8696** | **0.8514 ± 0.0091** | **0.7414 ± 0.0138** | **0.8355** | **0.9132** | **0.8726 ± 0.0045** | **0.7740 ± 0.0070** |
+
+### Copy-Paste takeaways
+- **Over Baseline (`none → both + copypaste`):** Validation overlap rises by **+4.36 pp Dice / +6.38 pp IoU** (`0.8078/0.6776 → 0.8514/0.7414`); held-out test overlap rises by **+2.31 pp Dice / +3.55 pp IoU** (`0.8495/0.7385 → 0.8726/0.7740`), improving **22/26** test images (`+0.0361` per-image IoU, `t = 3.76`, `p = 0.00049`; `+0.0233` Dice, `t = 3.38`, `p = 0.00137`).
+- **Over Flip + Small Zoom (`both → both + copypaste`):** Validation overlap rises by **+2.16 pp Dice / +3.23 pp IoU** (`0.8298/0.7091 → 0.8514/0.7414`), recovering Precision (`0.8158 → 0.8344`) alongside Recall (`0.8448 → 0.8696`). Test overlap rises by **+0.58 pp Dice / +0.91 pp IoU** (`15/26` test images improved, `p = 0.152`).
 
 ## Reproducibility files
 
@@ -113,5 +132,6 @@ All 12 runs share the fixed `119/25/26` `split_seed42.json` manifest, compact 16
   - Proposed `0.9–1.1` flip-plus-small-zoom runs: `results/augmentation_flip_small_zoom_seed{42,43,44}/` (copied to `results/all_project_results/models/`).
   - Repeat-seed `none`/`flip` runs: `results/augmentation_repeats/seed{42,43,44}_{none,flip}/` (copied to `results/all_project_results/models/`).
 - **Phase 2 (50-epoch GPU, cosine LR, `1.0–1.15` zoom at `p = 0.5`) artifacts:**
-  - All 12 runs (`none`, `zoom`, `flip`, `both` × seeds `42, 43, 44`): `results/tuned_{none,zoom,flip,both}_seed{42,43,44}/` (copied to `results/all_project_results/models/tuned_{none,zoom,flip,both}_seed{42,43,44}/`).
-  - Training and dataset code: `src/person_segmentation/data.py` and `src/person_segmentation/train.py`.
+  - All 12 core runs (`none`, `zoom`, `flip`, `both` × seeds `42, 43, 44`): `results/tuned_{none,zoom,flip,both}_seed{42,43,44}/` (copied to `results/all_project_results/models/`).
+  - Phase 3 Copy-Paste runs (`copypaste`, `both_copypaste` × seeds `42, 43, 44`): `results/tuned_{copypaste,both_copypaste}_seed{42,43,44}/` (copied to `results/all_project_results/models/`).
+  - Training and dataset code: `src/person_segmentation/data.py`, `src/person_segmentation/train.py`, `src/person_segmentation/copypaste.py`, and `src/person_segmentation/train_copypaste.py`.
