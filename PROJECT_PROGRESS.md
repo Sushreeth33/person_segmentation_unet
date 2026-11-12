@@ -75,7 +75,8 @@ Audit artifacts: `report/dataset_analysis/summary.md`, `summary.json`, `per_imag
 - [x] Repeat the required proposed model with training seeds 43 and 44 and record each validation/test result.
 - [x] Run the full 4-way tuned GPU comparison (`none`, `zoom`, `flip`, `both`) across seeds 42, 43, and 44 with cosine LR annealing and zoom-in `1.0–1.15` (`p = 0.5`).
 - [x] Generate comparison graphs and held-out test mask overlay visualizations for S.No. 6.
-- [ ] Assemble 10-slide presentation, 8-page max documentation report, and `MLproject_rollno_topic` submission folder (S.No. 8).
+- [x] Draft complete editable project report following the prescribed structure (`report/Person_Segmentation_UNet_Report.docx`, plus PDF preview `report/Person_Segmentation_UNet_Report.pdf`).
+- [ ] Finalize Title Page metadata / export final PDF, create 10-slide presentation, and assemble `MLproject_rollno_topic` submission folder (S.No. 8).
 
 ### Optional extensions (not requested by the project statement)
 
@@ -100,4 +101,8 @@ In Phase 2, after diagnosing zoom-out black padding, double resampling, and 30-e
 - Validation 3-seed means (`Dice / IoU`): `none` `0.8078 / 0.6776` → `zoom` `0.8168 / 0.6903` → `flip` `0.8277 / 0.7061` → `both` **`0.8298 / 0.7091`** (+2.20 / +3.15 pp).
 - Held-out test 3-seed means (`Dice / IoU`): `none` `0.8495 ± 0.0130 / 0.7385 ± 0.0197` → `zoom` `0.8529 / 0.7436` → `flip` `0.8629 / 0.7592` → `both` **`0.8668 ± 0.0016 / 0.7649 ± 0.0025`** (+1.73 / +2.64 pp; `20/26` test images improved, per-image IoU `p = 0.00130`).
 
-All model run folders (Phase 1 and Phase 2 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation/test visualizations, S.No. 5 & 6 comparison figures (`report/figures/`, `report/results_discussion.md`, `report/test_error_analysis/`), dataset audit outputs, and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).
+In Phase 3, training-only person-instance Copy-Paste augmentation (`src/person_segmentation/copypaste.py`, `train_copypaste.py`, `290` cutouts from the `119` training images) was evaluated across seeds 42, 43, and 44:
+- `copypaste` only (`p = 0.5`): validation Dice/IoU `0.8491 / 0.7379`, held-out test Dice/IoU `0.8628 / 0.7588`.
+- `both + copypaste` (`p = 0.5`): validation Dice/IoU **`0.8514 ± 0.0091 / 0.7414 ± 0.0138`**, held-out test Dice/IoU **`0.8726 ± 0.0045 / 0.7740 ± 0.0070`** (+2.31 / +3.55 pp over baseline; `22/26` test images improved, per-image IoU `p = 0.00049`).
+
+All model run folders (Phase 1, Phase 2, and Phase 3 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation/test visualizations, S.No. 5 & 6 comparison figures (`report/figures/`, `report/results_discussion.md`, `report/test_error_analysis/`), dataset audit outputs, the editable structured report (`report/Person_Segmentation_UNet_Report.docx`), and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).
