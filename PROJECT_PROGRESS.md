@@ -1,6 +1,5 @@
 # Person Segmentation Project Progress
 
-Checklist status based on the repository, the dataset audit, and the user's update that S.No. 1 and S.No. 2 are complete.
 
 ## Initial setup
 
@@ -106,3 +105,19 @@ In Phase 3, training-only person-instance Copy-Paste augmentation (`src/person_s
 - `both + copypaste` (`p = 0.5`): validation Dice/IoU **`0.8514 ± 0.0091 / 0.7414 ± 0.0138`**, held-out test Dice/IoU **`0.8726 ± 0.0045 / 0.7740 ± 0.0070`** (+2.31 / +3.55 pp over baseline; `22/26` test images improved, per-image IoU `p = 0.00049`).
 
 All model run folders (Phase 1, Phase 2, and Phase 3 `tuned_*`), metrics, checkpoints, histories, prediction masks, validation/test visualizations, S.No. 5 & 6 comparison figures (`report/figures/`, `report/results_discussion.md`, `report/test_error_analysis/`), dataset audit outputs, the editable structured report (`report/Person_Segmentation_UNet_Report.docx`), and report copies are consolidated in `results/all_project_results/` (tracked explicitly in Git alongside `report/`).
+
+### Milestone 10: Submission Packaging, Academic Poster & Presentation Integration
+- **Final Report Package:** Finalized the official 14-page project report in both editable Word (`report/Person_Segmentation_UNet_Report.docx`) and submission-ready PDF (`report/Person_Segmentation_UNet_Report.pdf`) formats, fully aligned with the IIT Patna IMPACT Lab guidelines.
+- **Repository & Presentation Links:** Appended Appendix B to the report with active, verified hyperlinks to:
+  - GitHub Repository: `https://github.com/Sushreeth33/person_segmentation_unet.git`
+  - Google Slides Presentation: `https://docs.google.com/presentation/d/1qUeX6-WzLKwkcdSYB7CSsgymCDjGfnK7/edit`
+  - Canva Project Presentation & Poster: `https://canva.link/0vf0cpiw0xeu1yi`
+- **Academic Poster:** Designed a professional 48" x 30" conference poster (`poster.pptx` / `poster_final.pptx` and `slides/poster.pptx`), featuring:
+  - 5-Level U-Net architecture diagram and high-resolution Sidharth-style end-to-end pipeline flowchart.
+  - Controlled inductive bias augmentation panels (Scene A Flip+Zoom and Scene B Copy-Paste).
+  - Multi-seed benchmark table with classic navy blue headers, statistical t-test validation, and qualitative segmentation overlays.
+- **Project Structure Standardisation:** Implemented the complete recommended directory hierarchy from Page 16 of `Project_Guidelines.pdf`:
+  - `configs/`: Standalone JSON configurations and split manifest.
+  - `models/`: Standalone primary trained U-Net checkpoint (`models/unet_proposed_both_seed42.pt`) and evaluation instructions.
+  - `notebooks/`: Interactive exploratory data analysis notebook (`notebooks/01_exploratory_data_analysis.ipynb`).
+  - `slides/`: Presentation overview and conference poster PowerPoint.

@@ -223,3 +223,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project scratch and temporary scripts
+scratch/
+powershell.bat
+~$*.docx
+*.lock

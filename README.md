@@ -5,11 +5,31 @@ Binary person segmentation on the Penn-Fudan Pedestrian dataset. This scaffold i
 ## Project layout
 
 ```text
-src/person_segmentation/  dataset, model, training, evaluation, prediction
-notebooks/                space for exploratory analysis
-report/                   space for experiment notes and results
-results/                  generated checkpoints and training history (git-ignored)
-slides/                   space for presentation material
+person_segmentation_unet/
+├── configs/                 # Experiment configurations and dataset split manifest
+│   ├── baseline_none.json
+│   ├── proposed_both.json
+│   ├── extended_copypaste.json
+│   └── split_seed42.json
+├── data/                    # Raw & preprocessed 256x256 Penn-Fudan dataset cache
+├── models/                  # Primary trained U-Net checkpoint & reproduction guide
+│   ├── README.md
+│   └── unet_proposed_both_seed42.pt
+├── notebooks/               # Exploratory Data Analysis (EDA) Jupyter Notebooks
+│   └── 01_exploratory_data_analysis.ipynb
+├── report/                  # Formal 14-page project report (DOCX & PDF), figures & error analysis
+│   ├── Person_Segmentation_UNet_Report.docx
+│   ├── Person_Segmentation_UNet_Report.pdf
+│   ├── figures/             # Publication-quality architecture & result figures
+│   └── dataset_analysis/    # Pre-split audit statistics and manifest
+├── results/                 # 18 experimental GPU runs (histories, checkpoints, metric JSONs)
+├── slides/                  # Conference poster and presentation workspace links
+│   ├── README.md
+│   └── poster.pptx
+├── src/person_segmentation/ # Modular PyTorch implementation (data, model, train, evaluate)
+├── PROJECT_PROGRESS.md      # Complete milestone & experiment tracking log
+├── README.md                # Reproduction commands & project documentation
+└── requirements.txt         # Pinned software environment specification
 ```
 
 ## Setup
